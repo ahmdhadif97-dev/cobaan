@@ -1,230 +1,32 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState } from "react";
 
 export default function NumberCounter() {
-  const [current, setCurrent] = useState(1);
   const [displayed, setDisplayed] = useState(1);
-  const [skipped, setSkipped] = useState([]);
-  const scrollRef = useRef(null);
-  const totalNumbers = 12;
-  const numberHeight = 50;
 
-  const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
-
-  const handleScroll = useCallback(() => {
-    if (!scrollRef.current) return;
-    const { scrollTop, clientHeight } = scrollRef.current;
-    const centerPos = scrollTop + clientHeight / 2;
-    const newDisplayed = Math.min(
-      totalNumbers, 
-      Math.max(1, Math.floor(centerPos / numberHeight) + 1)
-    );
-    setDisplayed(newDisplayed);
-  }, [totalNumbers, numberHeight]);
-
-  const scrollToNumber = useCallback((num) => {
-    if (scrollRef.current) {
-      const scrollPosition = (num - 1) * numberHeight - 
-                           scrollRef.current.clientHeight / 2 + 
-                           numberHeight / 2;
-      scrollRef.current.scrollTo({
-        top: scrollPosition,
-        behavior: "smooth"
-      });
+  const getNumbers = () => {
+    let numbers = [];
+    for (let i = displayed - 3; i <= displayed + 3; i++) {
+      if (i > 0) numbers.push(i);
     }
-  }, [numberHeight]);
-
-  const handleConfirm = useCallback(() => {
-    if (current < totalNumbers) {
-      const newCurrent = current + 1;
-      setCurrent(newCurrent);
-      scrollToNumber(newCurrent);
-    }
-  }, [current, totalNumbers, scrollToNumber]);
-
-  const handleSkip = useCallback(() => {
-    if (current < totalNumbers) {
-      setSkipped(prev => [...prev, current]);
-      const newCurrent = current + 1;
-      setCurrent(newCurrent);
-      scrollToNumber(newCurrent);
-    }
-  }, [current, totalNumbers, scrollToNumber]);
-
-  useEffect(() => {
-    scrollToNumber(1);
-  }, [scrollToNumber]);
+    return numbers;
+  };
 
   return (
-    <div className="counter-container">
-      <div 
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="numbers-scroller"
-      >
-        <div className="numbers-wrapper">
-          {numbers.map((num) => {
-            const isCurrent = num === current;
-            const isSkipped = skipped.includes(num);
-            const isDisplayed = num === displayed;
-            
-            return (
-              <div
-                key={num}
-                className={`
-                  number
-                  ${isCurrent ? 'current' : ''}
-                  ${isSkipped ? 'skipped' : ''}
-                  ${isDisplayed ? 'displayed' : ''}
-                `}
-              >
-                {String(num).padStart(4, "0")}
-                
-                {isDisplayed && (
-                  <div className="action-buttons">
-                    <button 
-                      onClick={handleConfirm}
-                      className="confirm-btn"
-                      aria-label="Confirm"
-                    >
-                      ✓
-                    </button>
-                    <button 
-                      onClick={handleSkip}
-                      className="skip-btn"
-                      aria-label="Skip"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="h-[300px] w-[120px] overflow-y-auto flex flex-col items-center">
+        {getNumbers().map((num, idx) => (
+          <div
+            key={idx}
+            className={`py-2 ${
+              num === displayed
+                ? "text-3xl font-bold text-black"
+                : "text-lg text-gray-400"
+            }`}
+          >
+            {String(num).padStart(4, "0")}
+          </div>
+        ))}
       </div>
-
-      <style jsx>{`
-        .counter-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        .numbers-scroller {
-          height: 350px;
-          width: 140px;
-          overflow-y: scroll;
-          scroll-snap-type: y mandatory;
-          position: relative;
-          scrollbar-width: thin;
-          scrollbar-color: #ccc transparent;
-        }
-        
-        .numbers-scroller::-webkit-scrollbar {
-          width: 4px;
-        }
-        
-        .numbers-scroller::-webkit-scrollbar-thumb {
-          background: #ccc;
-          border-radius: 2px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        
-        .numbers-scroller:hover::-webkit-scrollbar-thumb {
-          opacity: 1;
-        }
-        
-        .numbers-scroller::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .numbers-wrapper {
-          position: relative;
-          padding: 150px 0;
-        }
-        
-        .number {
-          height: ${numberHeight}px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          scroll-snap-align: center;
-          font-family: 'Menlo', 'Monaco', monospace;
-          color: #aaa;
-          font-size: 14px;
-          transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-          position: relative;
-          user-select: none;
-        }
-        
-        .number.displayed {
-          color: #000;
-          font-size: 20px;
-          font-weight: 600;
-        }
-        
-        .number.current {
-          background-color: #3a86ff;
-          color: white;
-          border-radius: 6px;
-        }
-        
-        .number.skipped {
-          color: #ff4d4f;
-          text-decoration: line-through;
-        }
-        
-        .action-buttons {
-          position: absolute;
-          right: -60px;
-          display: flex;
-          gap: 8px;
-          animation: fadeIn 0.2s ease-out;
-        }
-        
-        .confirm-btn, .skip-btn {
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .confirm-btn {
-          background-color: #28a745;
-          color: white;
-        }
-        
-        .confirm-btn:hover {
-          background-color: #218838;
-          transform: scale(1.05);
-        }
-        
-        .skip-btn {
-          background-color: #dc3545;
-          color: white;
-        }
-        
-        .skip-btn:hover {
-          background-color: #c82333;
-          transform: scale(1.05);
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateX(10px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
     </div>
   );
 }
