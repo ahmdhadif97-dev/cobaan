@@ -13,13 +13,3 @@ this.searchInput.addEventListener('keypress', (e) => {
         }
     }
 });
-scrollToValue(value) {
-    const targetIndex = value - 1;
-    const scrollTop = (targetIndex * this.itemHeight) 
-                    - (this.pickerContainer.clientHeight / 2 - this.itemHeight / 2);
-
-    this.pickerContainer.scrollTo({
-        top: scrollTop,
-        behavior: 'smooth'
-    });
-}
