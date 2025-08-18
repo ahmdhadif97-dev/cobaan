@@ -1,20 +1,7 @@
 import { useState } from "react";
 
 export default function NumberCounter() {
-  const [current, setCurrent] = useState(1);
   const [displayed, setDisplayed] = useState(1);
-  const [skipped, setSkipped] = useState([]);
-
-  const handleTick = () => {
-    setCurrent((prev) => prev + 1);
-    setDisplayed((prev) => prev + 1);
-  };
-
-  const handleCross = () => {
-    setSkipped((prev) => [...prev, displayed]);
-    setCurrent((prev) => prev + 1);
-    setDisplayed((prev) => prev + 1);
-  };
 
   const getNumbers = () => {
     let numbers = [];
@@ -26,52 +13,19 @@ export default function NumberCounter() {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div
-        className="relative h-[320px] w-[140px] flex flex-col items-center justify-center overflow-y-scroll"
-        style={{
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE/Edge
-        }}
-      >
-        <style jsx>{`
-          div::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
-          }
-        `}</style>
-
-        <div className="flex flex-col items-center space-y-2">
-          {getNumbers().map((num) => (
-            <div
-              key={num}
-              className={`transition-all duration-200 px-2 py-1 rounded text-center w-full relative
-                ${
-                  num === displayed
-                    ? "text-3xl font-bold bg-blue-500 text-white"
-                    : skipped.includes(num)
-                    ? "text-red-500 text-lg"
-                    : "text-gray-400 text-lg"
-                }`}
-            >
-              {String(num).padStart(4, "0")}
-              {num === displayed && (
-                <div className="absolute right-[-50px] top-1/2 -translate-y-1/2 flex space-x-2">
-                  <button
-                    onClick={handleTick}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white"
-                  >
-                    ✔
-                  </button>
-                  <button
-                    onClick={handleCross}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white"
-                  >
-                    ✘
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      <div className="h-[300px] w-[120px] overflow-y-auto flex flex-col items-center">
+        {getNumbers().map((num, idx) => (
+          <div
+            key={idx}
+            className={`py-2 ${
+              num === displayed
+                ? "text-3xl font-bold text-black"
+                : "text-lg text-gray-400"
+            }`}
+          >
+            {String(num).padStart(4, "0")}
+          </div>
+        ))}
       </div>
     </div>
   );
