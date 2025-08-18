@@ -1,10 +1,91 @@
-if (value >= 1 && value <= 300) {
-    const targetIndex = value - 1;
-    const scrollTop = targetIndex * this.itemHeight 
-        - (this.pickerContainer.clientHeight / 2 - this.itemHeight / 2);
+import { useState, useEffect, useRef } from "react";
 
-    this.pickerContainer.scrollTo({
-        top: scrollTop,
-        behavior: 'smooth'
+export default function NumberCounter() {
+  const [displayed, setDisplayed] = useState(1);
+  const containerRef = useRef(null);
+  const itemHeight = 50; // px
+  const totalNumbers = 300;
+
+  const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
+
+  // helper to scroll a given value into the vertical center
+  const scrollToValue = (value, smooth = true) => {
+    if (!containerRef.current) return;
+    const targetIndex = value - 1;
+    const scrollTop =
+      targetIndex * itemHeight -
+      (containerRef.current.clientHeight / 2 - itemHeight / 2);
+
+    containerRef.current.scrollTo({
+      top: scrollTop,
+      behavior: smooth ? "smooth" : "auto",
     });
+  };
+
+  // when mounting, center on the first number
+  useEffect(() => {
+    scrollToValue(1, false);
+  }, []);
+
+  // update displayed number when scrolling
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const center =
+      containerRef.current.scrollTop +
+      containerRef.current.clientHeight / 2;
+
+    const index = Math.round(center / itemHeight);
+    const newValue = Math.min(
+      totalNumbers,
+      Math.max(1, index + 1) // +1 because index starts from 0
+    );
+    setDisplayed(newValue);
+  };
+
+  // handle keyboard "jump to number"
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      const inputValue = parseInt(e.target.value, 10);
+      if (inputValue >= 1 && inputValue <= totalNumbers) {
+        scrollToValue(inputValue);
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-screen">
+      {/* Search box */}
+      <input
+        type="number"
+        min="1"
+        max={totalNumbers}
+        placeholder="Go to number..."
+        className="mb-4 border px-2 py-1 rounded w-40 text-center"
+        onKeyDown={handleKeyDown}
+      />
+
+      {/* Scrollable number list */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="h-[350px] w-40 overflow-y-scroll no-scrollbar border rounded text-center"
+      >
+        <div className="py-[150px]">
+          {numbers.map((num) => (
+            <div
+              key={num}
+              style={{ height: `${itemHeight}px` }}
+              className={`flex items-center justify-center text-2xl ${
+                num === displayed
+                  ? "text-black text-4xl font-bold"
+                  : "text-gray-400"
+              }`}
+            >
+              {String(num).padStart(4, "0")}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
