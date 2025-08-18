@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Box with Cobaan</title>
+  <title>Cobaan with Counter</title>
   <style>
     body {
-      background-color: #f5f7fa;   /* light background */
+      background-color: #f5f7fa;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -13,27 +13,70 @@
       font-family: Arial, sans-serif;
     }
 
-    /* The box */
+    /* The main box */
     .box {
-      position: relative;          /* lets us place things inside it */
-      background: white;           /* box color */
-      border: 2px solid #333;      /* border around the box */
-      padding: 40px 60px;          /* space inside the box */
-      font-size: 40px;             /* size of "cobaan" */
-      border-radius: 12px;         /* rounded corners */
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* soft shadow */
+      position: relative;
+      background: white;
+      border: 2px solid #333;
+      padding: 40px 60px;
+      font-size: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 30px;
     }
 
-    /* The circle with + sign */
+    /* Number area */
+    .numbers {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 80px;
+    }
+
+    .number {
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    /* Current number */
+    .current {
+      font-size: 36px;
+      color: black;
+      opacity: 1;
+    }
+
+    /* One step away */
+    .fade {
+      font-size: 24px;
+      color: grey;
+      opacity: 0.6;
+    }
+
+    /* Two steps away */
+    .small {
+      font-size: 16px;
+      color: lightgrey;
+      opacity: 0.4;
+    }
+
+    /* Gone */
+    .hidden {
+      display: none;
+    }
+
+    /* The + button */
     .circle {
-      position: absolute;          /* position inside box */
-      bottom: -20px;               /* push below the box */
-      right: -20px;                /* push to the right outside */
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
       width: 50px;
       height: 50px;
-      border-radius: 50%;          /* make it a circle */
-      background: #2563eb;         /* blue background */
-      color: white;                /* plus sign color */
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -41,13 +84,73 @@
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      user-select: none;
     }
   </style>
 </head>
 <body>
   <div class="box">
     cobaan
-    <div class="circle">+</div>
+    <div class="numbers" id="numbers"></div>
+    <div class="circle" id="addBtn">+</div>
   </div>
+
+  <script>
+    let today = new Date().toISOString().split("T")[0];
+    let counter = 0;
+
+    const addBtn = document.getElementById("addBtn");
+    const numbersDiv = document.getElementById("numbers");
+
+    addBtn.addEventListener("click", function () {
+      let now = new Date().toISOString().split("T")[0];
+
+      // reset if new day
+      if (now !== today) {
+        today = now;
+        counter = 0;
+        numbersDiv.innerHTML = "";
+      }
+
+      counter++;
+      let formatted = String(counter).padStart(4, "0");
+
+      // add new number element
+      let span = document.createElement("div");
+      span.textContent = formatted;
+      span.classList.add("number", "current");
+
+      // Insert as middle (current stays in center, older above, future below)
+      numbersDiv.appendChild(span);
+
+      // update all numbers appearance
+      updateStyles();
+    });
+
+    function updateStyles() {
+      let all = numbersDiv.querySelectorAll(".number");
+      let total = all.length;
+
+      all.forEach((el, index) => {
+        el.className = "number hidden"; // reset all first
+      });
+
+      if (total > 0) {
+        let current = all[total - 1];
+        current.className = "number current";
+
+        if (total - 2 >= 0) {
+          all[total - 2].className = "number fade";
+        }
+        if (total - 3 >= 0) {
+          all[total - 3].className = "number small";
+        }
+        if (total - 4 >= 0) {
+          all[total - 4].className = "number hidden";
+        }
+      }
+    }
+  </script>
 </body>
 </html>
+
