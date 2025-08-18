@@ -19,7 +19,20 @@
         .picker-container {
             width: 200px;
             height: 300px;
-            overflow-y: auto;
+            overflow-y: scroll;
+        }
+
+        .picker-container::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .picker-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .picker-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 8px;
         }
 
         .picker-list {
