@@ -47,6 +47,13 @@
         .current-number {
             font-weight: bold;
             color: #007AFF;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .current-number:hover {
+            color: #0056b3;
+            text-decoration: underline;
         }
 
         .main-container {
@@ -178,6 +185,7 @@
                 this.setupScrolling();
                 this.setupSearch();
                 this.setupButtonEvents();
+                this.setupCurrentNumberClick();
                 this.scrollToCenter();
             }
 
@@ -259,7 +267,14 @@
                     if (e.key === 'Enter') {
                         const value = parseInt(this.searchInput.value);
                         if (value >= 1 && value <= 300) {
-                            this.scrollToValue(value);
+                            // Fix: scroll to correct value by removing the -1 offset
+                            const targetIndex = value - 1;
+                            const scrollTop = targetIndex * this.itemHeight;
+                            
+                            this.pickerContainer.scrollTo({
+                                top: scrollTop,
+                                behavior: 'smooth'
+                            });
                         }
                     }
                 });
@@ -279,6 +294,12 @@
                 });
             }
 
+            setupCurrentNumberClick() {
+                this.currentNumberDisplay.addEventListener('click', () => {
+                    this.scrollToValue(this.currentNumber);
+                });
+            }
+
             confirmSelection() {
                 const centerItem = this.pickerList.querySelector('.picker-item.center');
                 if (centerItem) {
@@ -292,7 +313,6 @@
                 if (centerItem) {
                     this.currentNumber = parseInt(centerItem.dataset.value);
                     this.updateCurrentNumberDisplay();
-                    // Additional skip logic can be added here
                 }
             }
 
