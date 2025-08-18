@@ -1,23 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ini Sekadar Cobaan</title>
-    <style>
-        body {
-            background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-size: 40px;
-            font-family: Calibri, sans-serif;
-            color: orange;
-        }
-    </style>
+  <title>Box with Cobaan</title>
+  <style>
+    body {
+      background-color: #f5f7fa;   /* light background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    /* The box */
+    .box {
+      position: relative;          /* lets us place things inside it */
+      background: white;           /* box color */
+      border: 2px solid #333;      /* border around the box */
+      padding: 40px 60px;          /* space inside the box */
+      font-size: 40px;             /* size of "cobaan" */
+      border-radius: 12px;         /* rounded corners */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* soft shadow */
+    }
+
+    /* The circle with + sign */
+    .circle {
+      position: absolute;          /* position inside box */
+      bottom: -20px;               /* push below the box */
+      right: -20px;                /* push to the right outside */
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;          /* make it a circle */
+      background: #2563eb;         /* blue background */
+      color: white;                /* plus sign color */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+  </style>
 </head>
 <body>
-    coba an
+  <div class="box">
+    cobaan
+    <div class="circle">+</div>
+  </div>
 </body>
 </html>
-
-
