@@ -1,97 +1,204 @@
-import { useState, useRef, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrollable Number Picker</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-export default function NumberScroller() {
-  const [numbers] = useState(
-    Array.from({ length: 100 }, (_, i) => (i + 1).toString().padStart(4, "0"))
-  );
-  const scrollerRef = useRef(null);
-  const [centerNumber, setCenterNumber] = useState("0001");
+        .picker-container {
+            width: 200px;
+            height: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
 
-  // Track which number is centered
-  const handleScroll = () => {
-    if (scrollerRef.current) {
-      const { scrollTop, clientHeight } = scrollerRef.current;
-      const centerPos = scrollTop + clientHeight / 2;
-      const itemIndex = Math.floor(centerPos / 50); // 50px per item
-      const newCenter = numbers[itemIndex];
-      if (newCenter && newCenter !== centerNumber) {
-        setCenterNumber(newCenter);
-      }
-    }
-  };
+        .picker-list {
+            height: 100%;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            scroll-snap-type: y mandatory;
+        }
 
-  // Initialize to show 0001 centered with 0002-0004 below
-  useEffect(() => {
-    if (scrollerRef.current) {
-      scrollerRef.current.scrollTo({
-        top: 0,
-        behavior: "auto"
-      });
-      scrollerRef.current.addEventListener("scroll", handleScroll);
-      return () => scrollerRef.current.removeEventListener("scroll", handleScroll);
-    }
-  }, []);
+        .picker-item {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scroll-snap-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
 
-  return (
-    <div style={styles.container}>
-      <div 
-        ref={scrollerRef} 
-        style={styles.scroller}
-        onScroll={handleScroll}
-      >
-        {/* Add padding to properly center first and last items */}
-        <div style={{ height: "150px" }}></div>
-        
-        {numbers.map((num) => (
-          <div 
-            key={num}
-            data-value={num}
-            style={{
-              ...styles.number,
-              ...(num === centerNumber && styles.centerNumber)
-            }}
-          >
-            {num}
-          </div>
-        ))}
-        
-        <div style={{ height: "150px" }}></div>
-      </div>
+        .picker-item.center {
+            font-size: 32px;
+            font-weight: 600;
+            color: #000;
+            background: rgba(0,0,0,0.02);
+        }
+
+        .picker-item.side {
+            font-size: 18px;
+            color: #999;
+        }
+
+        .picker-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        /* Hide scrollbar */
+        .picker-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .picker-list {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Center highlight overlay */
+        .center-highlight {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 50px;
+            transform: translateY(-50%);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="picker-container">
+        <div class="center-highlight"></div>
+        <ul class="picker-list" id="pickerList">
+            <!-- Items will be populated by JavaScript -->
+        </ul>
     </div>
-  );
-}
 
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    backgroundColor: "#f5f5f5"
-  },
-  scroller: {
-    height: "350px",
-    width: "100px",
-    overflowY: "scroll",
-    scrollSnapType: "y mandatory",
-    scrollbarWidth: "thin",
-    fontFamily: "'Roboto Mono', monospace",
-    position: "relative"
-  },
-  number: {
-    height: "50px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    scrollSnapAlign: "center",
-    color: "#999",
-    fontSize: "14px",
-    transition: "all 0.2s ease"
-  },
-  centerNumber: {
-    color: "#000",
-    fontSize: "18px",
-    fontWeight: "bold",
-    transform: "scale(1.1)"
-  }
-};
+    <script>
+        class NumberPicker {
+            constructor() {
+                this.pickerList = document.getElementById('pickerList');
+                this.currentCenter = 1;
+                this.itemHeight = 50;
+                
+                this.generateItems();
+                this.setupScrolling();
+                this.scrollToCenter();
+            }
+
+            generateItems() {
+                // Generate numbers from -100 to 200 (plenty of range)
+                for (let i = -100; i <= 200; i++) {
+                    const li = document.createElement('li');
+                    li.className = 'picker-item side';
+                    li.textContent = String(i).padStart(4, '0');
+                    li.dataset.value = i;
+                    this.pickerList.appendChild(li);
+                }
+            }
+
+            setupScrolling() {
+                let scrollTimeout;
+                
+                this.pickerList.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.updateCenter();
+                    }, 50);
+                });
+
+                // Click to scroll to item
+                this.pickerList.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('picker-item')) {
+                        const value = parseInt(e.target.dataset.value);
+                        this.scrollToValue(value);
+                    }
+                });
+            }
+
+            updateCenter() {
+                const scrollTop = this.pickerList.scrollTop;
+                const containerHeight = this.pickerList.clientHeight;
+                const centerY = scrollTop + containerHeight / 2;
+                
+                // Find which item is closest to center
+                const items = this.pickerList.querySelectorAll('.picker-item');
+                let closestItem = null;
+                let minDistance = Infinity;
+
+                items.forEach((item, index) => {
+                    const itemTop = index * this.itemHeight;
+                    const itemCenter = itemTop + this.itemHeight / 2;
+                    const distance = Math.abs(centerY - itemCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestItem = item;
+                    }
+                });
+
+                // Update classes
+                items.forEach(item => {
+                    item.className = 'picker-item side';
+                });
+
+                if (closestItem) {
+                    closestItem.className = 'picker-item center';
+                    this.currentCenter = parseInt(closestItem.dataset.value);
+                }
+            }
+
+            scrollToValue(value) {
+                const items = this.pickerList.querySelectorAll('.picker-item');
+                const targetItem = Array.from(items).find(item => 
+                    parseInt(item.dataset.value) === value
+                );
+                
+                if (targetItem) {
+                    const index = Array.from(items).indexOf(targetItem);
+                    const scrollTop = index * this.itemHeight - 
+                        (this.pickerList.clientHeight / 2) + (this.itemHeight / 2);
+                    
+                    this.pickerList.scrollTo({
+                        top: scrollTop,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            scrollToCenter() {
+                // Start at 0001 (value = 1)
+                setTimeout(() => {
+                    this.scrollToValue(1);
+                }, 100);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new NumberPicker();
+        });
+    </script>
+</body>
+</html>
