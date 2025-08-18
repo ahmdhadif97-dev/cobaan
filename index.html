@@ -13,10 +13,10 @@ export default function NumberCounter() {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="h-[300px] w-[120px] overflow-y-auto flex flex-col items-center">
-        {getNumbers().map((num, idx) => (
+      <div className="h-[280px] w-[120px] overflow-y-auto flex flex-col items-center">
+        {getNumbers().map((num) => (
           <div
-            key={idx}
+            key={num}
             className={`py-2 ${
               num === displayed
                 ? "text-3xl font-bold text-black"
