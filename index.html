@@ -23,16 +23,12 @@
         }
 
         .picker-container::-webkit-scrollbar {
-            width: 16px;
+            display: none;
         }
 
-        .picker-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .picker-container::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 8px;
+        .picker-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .picker-list {
