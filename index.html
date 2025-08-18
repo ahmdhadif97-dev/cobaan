@@ -19,21 +19,13 @@
         .picker-container {
             width: 200px;
             height: 300px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            overflow: hidden;
-            position: relative;
+            overflow-y: auto;
         }
 
         .picker-list {
-            height: 100%;
-            overflow-y: scroll;
-
-            padding: 0;
+            padding: 125px 0;
             margin: 0;
             list-style: none;
-            scroll-snap-type: none;
         }
 
         .picker-item {
@@ -41,47 +33,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            scroll-snap-align: center;
             transition: all 0.2s ease;
-            cursor: pointer;
         }
 
         .picker-item.center {
             font-size: 32px;
             font-weight: 600;
             color: #000;
-            background: rgba(0,0,0,0.02);
         }
 
         .picker-item.side {
             font-size: 18px;
             color: #999;
         }
-
-        .picker-item:hover {
-            background: rgba(0,0,0,0.05);
-        }
-
-
-
-        /* Center highlight overlay */
-        .center-highlight {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 50px;
-            transform: translateY(-50%);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            pointer-events: none;
-            z-index: 1;
-        }
     </style>
 </head>
 <body>
-    <div class="picker-container">
-        <div class="center-highlight"></div>
+    <div class="picker-container" id="pickerContainer">
         <ul class="picker-list" id="pickerList">
             <!-- Items will be populated by JavaScript -->
         </ul>
@@ -90,8 +58,8 @@
     <script>
         class NumberPicker {
             constructor() {
+                this.pickerContainer = document.getElementById('pickerContainer');
                 this.pickerList = document.getElementById('pickerList');
-                this.currentCenter = 1;
                 this.itemHeight = 50;
                 
                 this.generateItems();
@@ -100,7 +68,7 @@
             }
 
             generateItems() {
-                // Generate numbers from -100 to 200 (plenty of range)
+                // Generate numbers from -100 to 200
                 for (let i = -100; i <= 200; i++) {
                     const li = document.createElement('li');
                     li.className = 'picker-item side';
@@ -113,26 +81,21 @@
             setupScrolling() {
                 let scrollTimeout;
                 
-                this.pickerList.addEventListener('scroll', () => {
+                this.pickerContainer.addEventListener('scroll', () => {
                     clearTimeout(scrollTimeout);
                     scrollTimeout = setTimeout(() => {
                         this.updateCenter();
                     }, 50);
                 });
-
-                // Click to scroll to item
-                this.pickerList.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('picker-item')) {
-                        const value = parseInt(e.target.dataset.value);
-                        this.scrollToValue(value);
-                    }
-                });
             }
 
             updateCenter() {
-                const scrollTop = this.pickerList.scrollTop;
-                const containerHeight = this.pickerList.clientHeight;
+                const scrollTop = this.pickerContainer.scrollTop;
+                const containerHeight = this.pickerContainer.clientHeight;
                 const centerY = scrollTop + containerHeight / 2;
+                
+                // Account for padding
+                const adjustedCenterY = centerY - 125;
                 
                 // Find which item is closest to center
                 const items = this.pickerList.querySelectorAll('.picker-item');
@@ -142,7 +105,7 @@
                 items.forEach((item, index) => {
                     const itemTop = index * this.itemHeight;
                     const itemCenter = itemTop + this.itemHeight / 2;
-                    const distance = Math.abs(centerY - itemCenter);
+                    const distance = Math.abs(adjustedCenterY - itemCenter);
                     
                     if (distance < minDistance) {
                         minDistance = distance;
@@ -157,32 +120,17 @@
 
                 if (closestItem) {
                     closestItem.className = 'picker-item center';
-                    this.currentCenter = parseInt(closestItem.dataset.value);
-                }
-            }
-
-            scrollToValue(value) {
-                const items = this.pickerList.querySelectorAll('.picker-item');
-                const targetItem = Array.from(items).find(item => 
-                    parseInt(item.dataset.value) === value
-                );
-                
-                if (targetItem) {
-                    const index = Array.from(items).indexOf(targetItem);
-                    const scrollTop = index * this.itemHeight - 
-                        (this.pickerList.clientHeight / 2) + (this.itemHeight / 2);
-                    
-                    this.pickerList.scrollTo({
-                        top: scrollTop,
-                        behavior: 'smooth'
-                    });
                 }
             }
 
             scrollToCenter() {
-                // Start at 0001 (value = 1)
+                // Start at 0001 (value = 1) - find index 101 (since we start from -100)
+                const targetIndex = 101; // -100 to 1 = 101 items
+                const scrollTop = targetIndex * this.itemHeight;
+                
                 setTimeout(() => {
-                    this.scrollToValue(1);
+                    this.pickerContainer.scrollTop = scrollTop;
+                    this.updateCenter();
                 }, 100);
             }
         }
