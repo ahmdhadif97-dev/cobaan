@@ -1,168 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Scrollable Counter</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f4f4f4;
-      font-family: Arial, sans-serif;
+import { useState } from "react";
+
+export default function NumberCounter() {
+  const [current, setCurrent] = useState(1); // current sequence number
+  const [displayed, setDisplayed] = useState(1); // number in center
+
+  const handleTick = () => {
+    setCurrent((prev) => prev + 1);
+    setDisplayed((prev) => prev + 1);
+  };
+
+  const handleCross = () => {
+    setCurrent((prev) => prev + 1);
+    setDisplayed((prev) => prev + 1);
+  };
+
+  const getNumbers = () => {
+    let numbers = [];
+    for (let i = displayed - 3; i <= displayed + 3; i++) {
+      if (i > 0) numbers.push(i);
     }
+    return numbers;
+  };
 
-    .counter-container {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 80%;
-      overflow-y: auto;
-      scrollbar-width: thin;
-    }
-
-    .number {
-      font-size: 1.5rem;
-      color: gray;
-      margin: 5px 0;
-      position: relative;
-      transition: all 0.3s ease;
-    }
-
-    .displayed {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: black;
-    }
-
-    .current {
-      border-bottom: 2px solid blue;
-    }
-
-    .skipped {
-      color: red;
-    }
-
-    .actions {
-      position: absolute;
-      right: -60px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      gap: 10px;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    .number.displayed:hover .actions {
-      opacity: 1;
-    }
-
-    .action-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .tick {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .cross {
-      background: #f44336;
-      color: white;
-    }
-  </style>
-</head>
-<body>
-  <div class="counter-container" id="counterContainer"></div>
-
-  <script>
-    let currentNumber = 1;
-    let displayedIndex = 0;
-    const container = document.getElementById('counterContainer');
-    const maxNumbers = 100;
-    const numbers = [];
-
-    function formatNumber(num) {
-      return num.toString().padStart(4, "0");
-    }
-
-    function renderNumbers() {
-      container.innerHTML = '';
-      for (let i = 1; i <= maxNumbers; i++) {
-        const div = document.createElement('div');
-        div.className = 'number';
-        div.textContent = formatNumber(i);
-
-        if (i === displayedIndex) {
-          div.classList.add('displayed');
-
-          // ✅ ❌ buttons
-          const actions = document.createElement('div');
-          actions.className = 'actions';
-
-          const tickBtn = document.createElement('button');
-          tickBtn.className = 'action-btn tick';
-          tickBtn.textContent = '✔';
-          tickBtn.onclick = () => moveForward(i, false);
-
-          const crossBtn = document.createElement('button');
-          crossBtn.className = 'action-btn cross';
-          crossBtn.textContent = '✘';
-          crossBtn.onclick = () => moveForward(i, true);
-
-          actions.appendChild(tickBtn);
-          actions.appendChild(crossBtn);
-          div.appendChild(actions);
-        }
-
-        if (i === currentNumber) {
-          div.classList.add('current');
-        }
-
-        if (numbers.includes(i)) {
-          div.classList.add('skipped');
-        }
-
-        container.appendChild(div);
-      }
-    }
-
-    function moveForward(num, isCross) {
-      if (isCross) {
-        numbers.push(num);
-      }
-      displayedIndex++;
-      currentNumber++;
-      renderNumbers();
-      scrollToDisplayed();
-    }
-
-    function scrollToDisplayed() {
-      const displayed = document.querySelector('.displayed');
-      if (displayed) {
-        displayed.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-
-    // Start with number 1
-    displayedIndex = 1;
-    currentNumber = 1;
-    renderNumbers();
-    scrollToDisplayed();
-  </script>
-</body>
-</html>
-
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="relative h-[300px] w-[100px] flex flex-col items-center justify-center overflow-hidden">
+        <div className="flex flex-col items-center space-y-2">
+          {getNumbers().map((num) => (
+            <div
+              key={num}
+              className={`transition-all duration-200 px-2 py-1 rounded text-center w-full
+                ${
+                  num === displayed
+                    ? "text-3xl font-bold relative bg-blue-500 text-white"
+                    : "text-gray-400 text-lg"
+                }`}
+            >
+              {String(num).padStart(4, "0")}
+              {num === displayed && (
+                <div className="absolute right-[-40px] top-1/2 -translate-y-1/2 flex space-x-2">
+                  <button
+                    onClick={handleTick}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white"
+                  >
+                    ✔
+                  </button>
+                  <button
+                    onClick={handleCross}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white"
+                  >
+                    ✘
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
