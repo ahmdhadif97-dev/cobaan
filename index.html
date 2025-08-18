@@ -1,200 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Cobaan with Counter + Navigation</title>
+  <meta charset="UTF-8">
+  <title>Cobaan Counter</title>
   <style>
     body {
-      background-color: #f5f7fa;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
     }
 
-    /* Main container */
     .container {
       display: flex;
-      gap: 60px; /* space between box and navigation */
       align-items: flex-start;
+      gap: 40px;
     }
 
-    /* The main cobaan box */
+    /* Box */
     .box {
       position: relative;
       background: white;
-      border: 2px solid #333;
-      padding: 40px 60px;
-      font-size: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 2px solid black;
+      border-radius: 8px;
+      padding: 20px 40px;
+      min-width: 200px;
+      min-height: 100px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
     }
 
-    /* Number area (outside box) */
+    .title {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      background: #ddd;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    /* Numbers outside box */
     .numbers {
       position: absolute;
       top: 50%;
-      left: 100%;
-      transform: translate(40px, -50%);
+      left: 110%;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 80px;
+      gap: 5px;
+      font-size: 24px;
     }
 
     .number {
       transition: all 0.3s ease;
+    }
+
+    .number.current {
+      font-size: 28px;
       font-weight: bold;
-    }
-
-    .current {
-      font-size: 36px;
       color: black;
-      opacity: 1;
     }
 
-    .fade {
-      font-size: 24px;
+    .number.past {
       color: grey;
       opacity: 0.6;
+      font-size: 20px;
     }
 
-    .small {
+    .number.older {
+      opacity: 0.3;
       font-size: 16px;
-      color: lightgrey;
-      opacity: 0.4;
     }
 
-    .hidden {
-      display: none;
-    }
-
-    /* The + button */
-    .circle {
+    /* Plus button */
+    .plus-btn {
       position: absolute;
       bottom: -20px;
       right: -20px;
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: #2563eb;
+      background: #007bff;
       color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 32px;
-      font-weight: bold;
+      border: none;
+      font-size: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-      user-select: none;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
     }
 
     /* Navigation table */
     .nav {
-      width: 150px;
-      max-height: 400px;
+      width: 100px;
+      height: 250px;
       overflow-y: auto;
       background: white;
       border: 1px solid #ccc;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      text-align: center;
       padding: 10px;
     }
 
-    .nav-item {
-      padding: 6px;
-      text-align: center;
+    .nav div {
+      padding: 5px;
       font-size: 18px;
-      cursor: default;
     }
 
-    .highlight {
-      background: #2563eb;
+    .nav .active {
+      background: #007bff;
       color: white;
-      border-radius: 6px;
+      border-radius: 4px;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Cobaan Box -->
+    <!-- Box -->
     <div class="box">
-      cobaan
+      <div class="title">cobaan</div>
       <div class="numbers" id="numbers"></div>
-      <div class="circle" id="addBtn">+</div>
+      <button class="plus-btn" onclick="addNumber()">+</button>
     </div>
 
-    <!-- Navigation Table -->
-    <div class="nav" id="navTable"></div>
+    <!-- Navigation -->
+    <div class="nav" id="nav"></div>
   </div>
 
   <script>
-    let today = new Date().toISOString().split("T")[0];
-    let counter = 0;
+    let currentNumber = 1;
 
-    const addBtn = document.getElementById("addBtn");
-    const numbersDiv = document.getElementById("numbers");
-    const navTable = document.getElementById("navTable");
+    function renderNumbers() {
+      const numbersDiv = document.getElementById("numbers");
+      const navDiv = document.getElementById("nav");
+      numbersDiv.innerHTML = "";
+      navDiv.innerHTML = "";
 
-    addBtn.addEventListener("click", function () {
-      let now = new Date().toISOString().split("T")[0];
+      // Show past 3, current, and next 3
+      for (let i = currentNumber - 3; i <= currentNumber + 3; i++) {
+        if (i > 0) {
+          let num = String(i).padStart(4, '0');
 
-      // reset if new day
-      if (now !== today) {
-        today = now;
-        counter = 0;
-        numbersDiv.innerHTML = "";
-        navTable.innerHTML = "";
-      }
+          // Center display
+          const span = document.createElement("div");
+          span.textContent = num;
+          span.classList.add("number");
 
-      counter++;
-      let formatted = String(counter).padStart(4, "0");
+          if (i === currentNumber) {
+            span.classList.add("current");
+          } else if (i < currentNumber) {
+            span.classList.add(i === currentNumber - 1 ? "past" : "older");
+          } else {
+            span.style.opacity = "0.5";
+          }
 
-      // add to main numbers
-      let span = document.createElement("div");
-      span.textContent = formatted;
-      span.classList.add("number", "current");
-      numbersDiv.appendChild(span);
+          numbersDiv.appendChild(span);
 
-      // add to navigation table
-      let navItem = document.createElement("div");
-      navItem.textContent = formatted;
-      navItem.classList.add("nav-item");
-      navTable.appendChild(navItem);
-
-      // update all numbers appearance
-      updateStyles();
-      updateNav();
-    });
-
-    function updateStyles() {
-      let all = numbersDiv.querySelectorAll(".number");
-      let total = all.length;
-
-      all.forEach((el, index) => {
-        el.className = "number hidden"; // reset all first
-      });
-
-      if (total > 0) {
-        let current = all[total - 1];
-        current.className = "number current";
-
-        if (total - 2 >= 0) all[total - 2].className = "number fade";
-        if (total - 3 >= 0) all[total - 3].className = "number small";
-        if (total - 4 >= 0) all[total - 4].className = "number hidden";
+          // Navigation
+          const navItem = document.createElement("div");
+          navItem.textContent = num;
+          if (i === currentNumber) navItem.classList.add("active");
+          navDiv.appendChild(navItem);
+        }
       }
     }
 
-    function updateNav() {
-      let allNav = navTable.querySelectorAll(".nav-item");
-      allNav.forEach(el => el.classList.remove("highlight"));
-      if (allNav.length > 0) {
-        allNav[allNav.length - 1].classList.add("highlight");
-        navTable.scrollTop = navTable.scrollHeight; // auto scroll to latest
+    function addNumber() {
+      currentNumber++;
+      renderNumbers();
+
+      // Auto scroll navigation to current
+      const navDiv = document.getElementById("nav");
+      const active = navDiv.querySelector(".active");
+      if (active) {
+        active.scrollIntoView({ block: "center", behavior: "smooth" });
       }
     }
+
+    // Initial render
+    renderNumbers();
   </script>
 </body>
 </html>
+
