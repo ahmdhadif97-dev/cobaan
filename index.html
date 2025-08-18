@@ -1,44 +1,73 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function NumberCounter() {
-  const [displayed, setDisplayed] = useState(1);
-  const containerRef = useRef(null);
+export default function NumberScroller() {
+  const [numbers] = useState(
+    Array.from({ length: 100 }, (_, i) => (i + 1).toString().padStart(4, "0")
+  );
+  const scrollerRef = useRef(null);
 
-  const getNumbers = () => {
-    let numbers = [];
-    for (let i = displayed - 3; i <= displayed + 3; i++) {
-      if (i > 0) numbers.push(i);
-    }
-    return numbers;
-  };
-
-  // Center on start
+  // Initialize to show 0001 centered with 0002-0004 below
   useEffect(() => {
-    if (containerRef.current) {
-      const middle = containerRef.current.scrollHeight / 2;
-      containerRef.current.scrollTop = middle;
+    if (scrollerRef.current) {
+      const firstItem = scrollerRef.current.querySelector("[data-value='0001']");
+      if (firstItem) {
+        const containerHeight = scrollerRef.current.clientHeight;
+        firstItem.scrollIntoView({
+          block: "center",
+          behavior: "auto"
+        });
+      }
     }
   }, []);
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div
-        ref={containerRef}
-        className="h-[280px] w-[120px] overflow-y-scroll flex flex-col items-center scrollbar-thin"
-      >
-        {getNumbers().map((num) => (
-          <div
-            key={num}
-            className={`py-2 ${
-              num === displayed
-                ? "text-3xl font-bold text-black"
-                : "text-lg text-gray-400"
-            }`}
+    <div style={styles.container}>
+      <div ref={scrollerRef} style={styles.scroller}>
+        {numbers.map((num) => (
+          <div 
+            key={num} 
+            data-value={num}
+            style={{
+              ...styles.number,
+              ...(num === "0001" && styles.centerNumber)
+            }}
           >
-            {String(num).padStart(4, "0")}
+            {num}
           </div>
         ))}
       </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100vh",
+    backgroundColor: "#f5f5f5"
+  },
+  scroller: {
+    height: "350px",
+    width: "100px",
+    overflowY: "scroll",
+    scrollSnapType: "y mandatory",
+    scrollbarWidth: "thin",
+    fontFamily: "monospace"
+  },
+  number: {
+    height: "50px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    scrollSnapAlign: "center",
+    color: "#999",
+    fontSize: "14px"
+  },
+  centerNumber: {
+    color: "#000",
+    fontSize: "18px",
+    fontWeight: "bold"
+  }
+};
