@@ -5,10 +5,9 @@ export default function NumberCounter() {
   const containerRef = useRef(null);
   const itemHeight = 50; // px
   const totalNumbers = 300;
-
   const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
 
-  // helper to scroll a given value into the vertical center
+  // scroll to value in center
   const scrollToValue = (value, smooth = true) => {
     if (!containerRef.current) return;
     const targetIndex = value - 1;
@@ -22,48 +21,25 @@ export default function NumberCounter() {
     });
   };
 
-  // when mounting, center on the first number
+  // center on "0001" at mount
   useEffect(() => {
     scrollToValue(1, false);
   }, []);
 
-  // update displayed number when scrolling
+  // update displayed number on scroll
   const handleScroll = () => {
     if (!containerRef.current) return;
     const center =
       containerRef.current.scrollTop +
       containerRef.current.clientHeight / 2;
 
-    const index = Math.round(center / itemHeight);
-    const newValue = Math.min(
-      totalNumbers,
-      Math.max(1, index + 1) // +1 because index starts from 0
-    );
+    const index = Math.round(center / itemHeight) - 1;
+    const newValue = Math.min(totalNumbers, Math.max(1, index + 1));
     setDisplayed(newValue);
-  };
-
-  // handle keyboard "jump to number"
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      const inputValue = parseInt(e.target.value, 10);
-      if (inputValue >= 1 && inputValue <= totalNumbers) {
-        scrollToValue(inputValue);
-      }
-    }
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      {/* Search box */}
-      <input
-        type="number"
-        min="1"
-        max={totalNumbers}
-        placeholder="Go to number..."
-        className="mb-4 border px-2 py-1 rounded w-40 text-center"
-        onKeyDown={handleKeyDown}
-      />
-
       {/* Scrollable number list */}
       <div
         ref={containerRef}
@@ -75,10 +51,10 @@ export default function NumberCounter() {
             <div
               key={num}
               style={{ height: `${itemHeight}px` }}
-              className={`flex items-center justify-center text-2xl ${
+              className={`flex items-center justify-center transition-all ${
                 num === displayed
                   ? "text-black text-4xl font-bold"
-                  : "text-gray-400"
+                  : "text-gray-400 text-xl"
               }`}
             >
               {String(num).padStart(4, "0")}
