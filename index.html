@@ -1,105 +1,40 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 
-export default function NumberCounter() {
-  const [current, setCurrent] = useState(1);
-  const [displayed, setDisplayed] = useState(1);
-  const [skipped, setSkipped] = useState([]);
-  const scrollRef = useRef(null);
-  const totalNumbers = 12;
-  const numberHeight = 50;
+export default function NumberScroller() {
+  const [numbers] = useState(
+    Array.from({ length: 100 }, (_, i) => (i + 1).toString().padStart(4, "0")
+  );
+  const scrollerRef = useRef(null);
 
-  const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
-
-  const handleScroll = useCallback(() => {
-    if (!scrollRef.current) return;
-    const { scrollTop, clientHeight } = scrollRef.current;
-    const centerPos = scrollTop + clientHeight / 2;
-    const newDisplayed = Math.min(
-      totalNumbers, 
-      Math.max(1, Math.floor(centerPos / numberHeight) + 1)
-    );
-    setDisplayed(newDisplayed);
-  }, [totalNumbers, numberHeight]);
-
-  const scrollToNumber = useCallback((num) => {
-    if (scrollRef.current) {
-      const scrollPosition = (num - 1) * numberHeight - 
-                           scrollRef.current.clientHeight / 2 + 
-                           numberHeight / 2;
-      scrollRef.current.scrollTo({
-        top: scrollPosition,
-        behavior: "smooth"
-      });
-    }
-  }, [numberHeight]);
-
-  const handleConfirm = useCallback(() => {
-    if (current < totalNumbers) {
-      const newCurrent = current + 1;
-      setCurrent(newCurrent);
-      scrollToNumber(newCurrent);
-    }
-  }, [current, totalNumbers, scrollToNumber]);
-
-  const handleSkip = useCallback(() => {
-    if (current < totalNumbers) {
-      setSkipped(prev => [...prev, current]);
-      const newCurrent = current + 1;
-      setCurrent(newCurrent);
-      scrollToNumber(newCurrent);
-    }
-  }, [current, totalNumbers, scrollToNumber]);
-
+  // Initialize to show 0001 centered with 0002-0004 below
   useEffect(() => {
-    scrollToNumber(1);
-  }, [scrollToNumber]);
+    if (scrollerRef.current) {
+      const firstItem = scrollerRef.current.querySelector("[data-value='0001']");
+      if (firstItem) {
+        const containerHeight = scrollerRef.current.clientHeight;
+        firstItem.scrollIntoView({
+          block: "center",
+          behavior: "auto"
+        });
+      }
+    }
+  }, []);
 
   return (
     <div style={styles.container}>
-      <div 
-        ref={scrollRef}
-        onScroll={handleScroll}
-        style={styles.scroller}
-      >
-        <div style={styles.numbersWrapper}>
-          {numbers.map((num) => {
-            const isCurrent = num === current;
-            const isSkipped = skipped.includes(num);
-            const isDisplayed = num === displayed;
-            
-            const numberStyle = {
+      <div ref={scrollerRef} style={styles.scroller}>
+        {numbers.map((num) => (
+          <div 
+            key={num} 
+            data-value={num}
+            style={{
               ...styles.number,
-              ...(isDisplayed && styles.displayedNumber),
-              ...(isCurrent && styles.currentNumber),
-              ...(isSkipped && styles.skippedNumber)
-            };
-            
-            return (
-              <div key={num} style={numberStyle}>
-                {String(num).padStart(4, "0")}
-                
-                {isDisplayed && (
-                  <div style={styles.actionButtons}>
-                    <button 
-                      onClick={handleConfirm}
-                      style={styles.confirmButton}
-                      aria-label="Confirm"
-                    >
-                      ✓
-                    </button>
-                    <button 
-                      onClick={handleSkip}
-                      style={styles.skipButton}
-                      aria-label="Skip"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              ...(num === "0001" && styles.centerNumber)
+            }}
+          >
+            {num}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -107,110 +42,32 @@ export default function NumberCounter() {
 
 const styles = {
   container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    fontFamily: 'system-ui, sans-serif'
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100vh",
+    backgroundColor: "#f5f5f5"
   },
   scroller: {
-    height: '350px',
-    width: '140px',
-    overflowY: 'scroll',
-    scrollSnapType: 'y mandatory',
-    position: 'relative',
-    scrollbarWidth: 'thin',
-    scrollbarColor: '#ccc transparent',
-    msOverflowStyle: 'none',
-  },
-  scrollerWebkit: {
-    '&::-webkit-scrollbar': {
-      width: '4px'
-    },
-    '&::-webkit-scrollbar-thumb': {
-      background: '#ccc',
-      borderRadius: '2px',
-      opacity: 0,
-      transition: 'opacity 0.3s ease'
-    },
-    '&:hover::-webkit-scrollbar-thumb': {
-      opacity: 1
-    },
-    '&::-webkit-scrollbar-track': {
-      background: 'transparent'
-    }
-  },
-  numbersWrapper: {
-    position: 'relative',
-    padding: '150px 0'
+    height: "350px",
+    width: "100px",
+    overflowY: "scroll",
+    scrollSnapType: "y mandatory",
+    scrollbarWidth: "thin",
+    fontFamily: "monospace"
   },
   number: {
-    height: '50px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    scrollSnapAlign: 'center',
-    fontFamily: 'monospace',
-    color: '#aaa',
-    fontSize: '14px',
-    transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
-    position: 'relative',
-    userSelect: 'none'
+    height: "50px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    scrollSnapAlign: "center",
+    color: "#999",
+    fontSize: "14px"
   },
-  displayedNumber: {
-    color: '#000',
-    fontSize: '20px',
-    fontWeight: 600
-  },
-  currentNumber: {
-    backgroundColor: '#3a86ff',
-    color: 'white',
-    borderRadius: '6px'
-  },
-  skippedNumber: {
-    color: '#ff4d4f',
-    textDecoration: 'line-through'
-  },
-  actionButtons: {
-    position: 'absolute',
-    right: '-60px',
-    display: 'flex',
-    gap: '8px',
-    animation: 'fadeIn 0.2s ease-out'
-  },
-  confirmButton: {
-    width: '26px',
-    height: '26px',
-    borderRadius: '50%',
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    backgroundColor: '#28a745',
-    color: 'white'
-  },
-  skipButton: {
-    width: '26px',
-    height: '26px',
-    borderRadius: '50%',
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    backgroundColor: '#dc3545',
-    color: 'white'
-  },
-  '@keyframes fadeIn': {
-    from: { opacity: 0, transform: 'translateX(10px)' },
-    to: { opacity: 1, transform: 'translateX(0)' }
+  centerNumber: {
+    color: "#000",
+    fontSize: "18px",
+    fontWeight: "bold"
   }
 };
