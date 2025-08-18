@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cobaan</title>
+  <title>Number Counter</title>
   <style>
     body {
       margin: 0;
@@ -15,43 +15,14 @@
       overflow: hidden;
     }
 
-    /* Top-left box */
-    .box {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      border: 2px solid black;
-      border-radius: 10px;
-      padding: 15px 30px;
-      background: #f9f9f9;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .plus-button {
-      position: absolute;
-      bottom: -15px;
-      right: -15px;
-      background: #1976d2;
-      color: white;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-    }
-
-    /* Center number sequence */
+    /* Center section */
     .center-numbers {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-direction: column;
-      overflow: hidden;
+      position: relative;
     }
 
     .number {
@@ -78,10 +49,21 @@
       opacity: 1;
     }
 
+    /* Skipped note left of counter */
+    .skipped-note {
+      position: absolute;
+      left: 20%;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: red;
+      text-align: right;
+    }
+
     /* Right navigation table */
     .nav {
-      width: 120px;
-      background: #f1f1f1;
+      width: 150px;
+      background: #f9f9f9;
       padding: 10px;
       overflow-y: auto;
       border-left: 2px solid #ccc;
@@ -92,6 +74,7 @@
       text-align: center;
       font-size: 18px;
       cursor: pointer;
+      position: relative;
     }
 
     .highlight {
@@ -100,20 +83,51 @@
       font-weight: bold;
       border-radius: 5px;
     }
+
+    /* Mark skipped in red */
+    .skipped {
+      color: red;
+      font-weight: bold;
+    }
+
+    /* Tick and cross icons */
+    .actions {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      gap: 5px;
+    }
+
+    .nav-number:hover .actions {
+      display: inline-flex;
+    }
+
+    .action-btn {
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .tick {
+      color: green;
+    }
+
+    .cross {
+      color: red;
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <div>cobaan</div>
-    <div class="plus-button" onclick="addNumber()">+</div>
-  </div>
-
   <div class="center-numbers" id="centerNumbers"></div>
 
   <div class="nav" id="navTable"></div>
 
   <script>
     let currentNumber = 1;
+    let skippedNumbers = new Set();
 
     function formatNumber(num) {
       return num.toString().padStart(4, "0");
@@ -124,6 +138,14 @@
       const navDiv = document.getElementById("navTable");
       centerDiv.innerHTML = "";
       navDiv.innerHTML = "";
+
+      // Show skipped numbers note
+      if (skippedNumbers.size > 0) {
+        const skippedDiv = document.createElement("div");
+        skippedDiv.className = "skipped-note";
+        skippedDiv.textContent = "Skipped: " + [...skippedNumbers].sort((a, b) => a - b).map(formatNumber).join(", ");
+        centerDiv.appendChild(skippedDiv);
+      }
 
       // Show past numbers (up to 3 before)
       for (let i = currentNumber - 3; i < currentNumber; i++) {
@@ -149,14 +171,49 @@
         centerDiv.appendChild(div);
       }
 
-      // Fill navigation table (past + current + future 50 numbers)
-      for (let i = 1; i <= currentNumber + 50; i++) {
+      // Fill navigation table (show 1 to 100 for now)
+      for (let i = 1; i <= 100; i++) {
         const navItem = document.createElement("div");
-        navItem.textContent = formatNumber(i);
         navItem.className = "nav-number";
         if (i === currentNumber) {
           navItem.classList.add("highlight");
         }
+        if (skippedNumbers.has(i)) {
+          navItem.classList.add("skipped");
+        }
+
+        // number text
+        const numText = document.createElement("span");
+        numText.textContent = formatNumber(i);
+        navItem.appendChild(numText);
+
+        // actions (tick + cross)
+        const actions = document.createElement("span");
+        actions.className = "actions";
+
+        const tickBtn = document.createElement("span");
+        tickBtn.textContent = "✔";
+        tickBtn.className = "action-btn tick";
+        tickBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentNumber = i;
+          renderNumbers();
+        };
+
+        const crossBtn = document.createElement("span");
+        crossBtn.textContent = "✘";
+        crossBtn.className = "action-btn cross";
+        crossBtn.onclick = (e) => {
+          e.stopPropagation();
+          skippedNumbers.add(i);
+          currentNumber = i;
+          renderNumbers();
+        };
+
+        actions.appendChild(tickBtn);
+        actions.appendChild(crossBtn);
+        navItem.appendChild(actions);
+
         navDiv.appendChild(navItem);
       }
 
@@ -165,11 +222,6 @@
       if (highlight) {
         highlight.scrollIntoView({ block: "center" });
       }
-    }
-
-    function addNumber() {
-      currentNumber++;
-      renderNumbers();
     }
 
     // Initial render
