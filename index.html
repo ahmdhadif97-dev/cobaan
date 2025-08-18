@@ -1,15 +1,10 @@
-this.searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        const value = parseInt(this.searchInput.value);
-        if (value >= 1 && value <= 300) {
-            const targetIndex = value - 1;
-            const scrollTop = (targetIndex * this.itemHeight) 
-                            - (this.pickerContainer.clientHeight / 2 - this.itemHeight / 2);
+if (value >= 1 && value <= 300) {
+    const targetIndex = value - 1;
+    const scrollTop = targetIndex * this.itemHeight 
+        - (this.pickerContainer.clientHeight / 2 - this.itemHeight / 2);
 
-            this.pickerContainer.scrollTo({
-                top: scrollTop,
-                behavior: 'smooth'
-            });
-        }
-    }
-});
+    this.pickerContainer.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+    });
+}
