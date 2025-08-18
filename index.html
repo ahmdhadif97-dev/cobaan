@@ -5,39 +5,277 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scrollable Number Picker</title>
     <style>
-        /* [Previous CSS styles remain exactly the same] */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+        }
+
+        .current-display {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .current-number {
+            font-weight: bold;
+            color: #007AFF;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .current-number:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .picker-container {
+            width: 200px;
+            height: 300px;
+            overflow-y: scroll;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .picker-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .picker-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .picker-list {
+            padding: 125px 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .picker-item {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .center-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .picker-item.center {
+            font-size: 32px;
+            font-weight: 600;
+            color: #000;
+            margin: 15px 0;
+        }
+
+        .picker-item.current {
+            font-size: 32px;
+            font-weight: 600;
+            color: #007AFF;
+            margin: 15px 0;
+        }
+
+        .picker-item.current.side-size {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .picker-item.side {
+            font-size: 18px;
+            color: #999;
+        }
+
+        .control-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .tick-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .cross-btn {
+            background: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <!-- [Previous HTML structure remains exactly the same] -->
+    <div class="header">
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="0001" maxlength="4">
+        </div>
+        <div class="current-display">
+            Current: <span class="current-number" id="currentNumberDisplay">0001</span>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="picker-container" id="pickerContainer">
+            <ul class="picker-list" id="pickerList">
+                <!-- Items will be populated by JavaScript -->
+            </ul>
+        </div>
+    </div>
 
     <script>
         class NumberPicker {
             constructor() {
-                // [Previous initialization code remains the same]
+                this.pickerContainer = document.getElementById('pickerContainer');
+                this.pickerList = document.getElementById('pickerList');
+                this.searchInput = document.getElementById('searchInput');
+                this.currentNumberDisplay = document.getElementById('currentNumberDisplay');
+                this.itemHeight = 50;
+                this.currentNumber = 1;
+                
+                this.generateItems();
+                this.setupScrolling();
+                this.setupSearch();
+                this.setupButtonEvents();
+                this.setupCurrentNumberClick();
+                this.scrollToCenter();
             }
 
-            // [Previous methods remain the same until setupSearch()]
+            generateItems() {
+                for (let i = 1; i <= 300; i++) {
+                    const li = document.createElement('li');
+                    li.className = 'picker-item side';
+                    li.textContent = String(i).padStart(4, '0');
+                    li.dataset.value = i;
+                    li.dataset.display = String(i).padStart(4, '0');
+                    this.pickerList.appendChild(li);
+                }
+            }
+
+            setupScrolling() {
+                let scrollTimeout;
+                
+                this.pickerContainer.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.updateCenter();
+                    }, 50);
+                });
+            }
+
+            updateCenter() {
+                const scrollTop = this.pickerContainer.scrollTop;
+                const containerHeight = this.pickerContainer.clientHeight;
+                const centerY = scrollTop + containerHeight / 2;
+                const adjustedCenterY = centerY - 125;
+                
+                const items = this.pickerList.querySelectorAll('.picker-item');
+                let closestItem = null;
+                let minDistance = Infinity;
+
+                items.forEach((item, index) => {
+                    const itemTop = index * this.itemHeight;
+                    const itemCenter = itemTop + this.itemHeight / 2;
+                    const distance = Math.abs(adjustedCenterY - itemCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestItem = item;
+                    }
+                });
+
+                items.forEach(item => {
+                    const value = parseInt(item.dataset.value);
+                    if (value === this.currentNumber && item === closestItem) {
+                        item.className = 'picker-item current';
+                        item.innerHTML = `
+                            <div class="center-row">
+                                <span>${item.dataset.display}</span>
+                                <button class="control-btn tick-btn">✓</button>
+                                <button class="control-btn cross-btn">✗</button>
+                            </div>
+                        `;
+                    } else if (item === closestItem) {
+                        item.className = 'picker-item center';
+                        item.innerHTML = `
+                            <div class="center-row">
+                                <span>${item.dataset.display}</span>
+                                <button class="control-btn tick-btn">✓</button>
+                                <button class="control-btn cross-btn">✗</button>
+                            </div>
+                        `;
+                    } else if (value === this.currentNumber) {
+                        item.className = 'picker-item current side-size';
+                        item.textContent = item.dataset.display;
+                    } else {
+                        item.className = 'picker-item side';
+                        item.textContent = item.dataset.display;
+                    }
+                });
+            }
 
             setupSearch() {
                 this.searchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
-                        let value = parseInt(this.searchInput.value);
-                        if (isNaN(value)) return;
-                        
-                        // Ensure value is within bounds
-                        value = Math.max(1, Math.min(300, value));
-                        
-                        // Calculate scroll position correctly
-                        const scrollPosition = (value - 1) * this.itemHeight;
-                        
-                        // Account for the padding (125px) to properly center
-                        const centerPosition = scrollPosition - (this.pickerContainer.clientHeight / 2) + (this.itemHeight / 2);
-                        
-                        this.pickerContainer.scrollTo({
-                            top: centerPosition,
-                            behavior: 'smooth'
-                        });
+                        const value = parseInt(this.searchInput.value);
+                        if (value >= 1 && value <= 300) {
+                            // Fix: scroll to correct value by removing the -1 offset
+                            const targetIndex = value - 1;
+                            const scrollTop = targetIndex * this.itemHeight;
+                            
+                            this.pickerContainer.scrollTo({
+                                top: scrollTop,
+                                behavior: 'smooth'
+                            });
+                        }
                     }
                 });
 
@@ -46,7 +284,62 @@
                 });
             }
 
-            // [Rest of the methods remain the same]
+            setupButtonEvents() {
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tick-btn')) {
+                        this.confirmSelection();
+                    } else if (e.target.classList.contains('cross-btn')) {
+                        this.skipSelection();
+                    }
+                });
+            }
+
+            setupCurrentNumberClick() {
+                this.currentNumberDisplay.addEventListener('click', () => {
+                    this.scrollToValue(this.currentNumber);
+                });
+            }
+
+            confirmSelection() {
+                const centerItem = this.pickerList.querySelector('.picker-item.center');
+                if (centerItem) {
+                    this.currentNumber = parseInt(centerItem.dataset.value);
+                    this.updateCurrentNumberDisplay();
+                }
+            }
+
+            skipSelection() {
+                const centerItem = this.pickerList.querySelector('.picker-item.center');
+                if (centerItem) {
+                    this.currentNumber = parseInt(centerItem.dataset.value);
+                    this.updateCurrentNumberDisplay();
+                }
+            }
+
+            scrollToValue(value) {
+                const targetIndex = value - 1;
+                const scrollTop = targetIndex * this.itemHeight;
+                
+                this.pickerContainer.scrollTo({
+                    top: scrollTop,
+                    behavior: 'smooth'
+                });
+            }
+
+            updateCurrentNumberDisplay() {
+                this.currentNumberDisplay.textContent = String(this.currentNumber).padStart(4, '0');
+            }
+
+            scrollToCenter() {
+                const targetIndex = 0;
+                const scrollTop = targetIndex * this.itemHeight;
+                
+                setTimeout(() => {
+                    this.pickerContainer.scrollTop = scrollTop;
+                    this.updateCenter();
+                    this.updateCurrentNumberDisplay();
+                }, 100);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
