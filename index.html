@@ -3,14 +3,14 @@ this.searchInput.addEventListener('keypress', (e) => {
         const value = parseInt(this.searchInput.value);
         if (value >= 1 && value <= 300) {
             const targetIndex = value - 1;
-            const scrollTop = (targetIndex * this.itemHeight) 
+            const scrollTop = (targetIndex * this.itemHeight)
                             - (this.pickerContainer.clientHeight / 2 - this.itemHeight / 2);
 
-            // ✅ Manually set dn to the searched value
+            // ✅ set dn immediately so it doesn’t flash one less
             this.dn = value;
             this.updateHighlight();
 
-            // ✅ Smooth scroll without "jumping back one"
+            // smooth scroll
             this.pickerContainer.scrollTo({
                 top: scrollTop,
                 behavior: 'smooth'
