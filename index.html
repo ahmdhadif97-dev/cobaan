@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Cobaan with Counter</title>
+  <title>Cobaan with Counter + Navigation</title>
   <style>
     body {
       background-color: #f5f7fa;
@@ -13,7 +13,14 @@
       font-family: Arial, sans-serif;
     }
 
-    /* The main box */
+    /* Main container */
+    .container {
+      display: flex;
+      gap: 60px; /* space between box and navigation */
+      align-items: flex-start;
+    }
+
+    /* The main cobaan box */
     .box {
       position: relative;
       background: white;
@@ -22,17 +29,17 @@
       font-size: 40px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      gap: 30px;
     }
 
-    /* Number area */
+    /* Number area (outside box) */
     .numbers {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translate(40px, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-width: 80px;
     }
 
@@ -41,28 +48,24 @@
       font-weight: bold;
     }
 
-    /* Current number */
     .current {
       font-size: 36px;
       color: black;
       opacity: 1;
     }
 
-    /* One step away */
     .fade {
       font-size: 24px;
       color: grey;
       opacity: 0.6;
     }
 
-    /* Two steps away */
     .small {
       font-size: 16px;
       color: lightgrey;
       opacity: 0.4;
     }
 
-    /* Gone */
     .hidden {
       display: none;
     }
@@ -86,13 +89,45 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.25);
       user-select: none;
     }
+
+    /* Navigation table */
+    .nav {
+      width: 150px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 10px;
+    }
+
+    .nav-item {
+      padding: 6px;
+      text-align: center;
+      font-size: 18px;
+      cursor: default;
+    }
+
+    .highlight {
+      background: #2563eb;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    cobaan
-    <div class="numbers" id="numbers"></div>
-    <div class="circle" id="addBtn">+</div>
+  <div class="container">
+    <!-- Cobaan Box -->
+    <div class="box">
+      cobaan
+      <div class="numbers" id="numbers"></div>
+      <div class="circle" id="addBtn">+</div>
+    </div>
+
+    <!-- Navigation Table -->
+    <div class="nav" id="navTable"></div>
   </div>
 
   <script>
@@ -101,6 +136,7 @@
 
     const addBtn = document.getElementById("addBtn");
     const numbersDiv = document.getElementById("numbers");
+    const navTable = document.getElementById("navTable");
 
     addBtn.addEventListener("click", function () {
       let now = new Date().toISOString().split("T")[0];
@@ -110,21 +146,27 @@
         today = now;
         counter = 0;
         numbersDiv.innerHTML = "";
+        navTable.innerHTML = "";
       }
 
       counter++;
       let formatted = String(counter).padStart(4, "0");
 
-      // add new number element
+      // add to main numbers
       let span = document.createElement("div");
       span.textContent = formatted;
       span.classList.add("number", "current");
-
-      // Insert as middle (current stays in center, older above, future below)
       numbersDiv.appendChild(span);
+
+      // add to navigation table
+      let navItem = document.createElement("div");
+      navItem.textContent = formatted;
+      navItem.classList.add("nav-item");
+      navTable.appendChild(navItem);
 
       // update all numbers appearance
       updateStyles();
+      updateNav();
     });
 
     function updateStyles() {
@@ -139,18 +181,20 @@
         let current = all[total - 1];
         current.className = "number current";
 
-        if (total - 2 >= 0) {
-          all[total - 2].className = "number fade";
-        }
-        if (total - 3 >= 0) {
-          all[total - 3].className = "number small";
-        }
-        if (total - 4 >= 0) {
-          all[total - 4].className = "number hidden";
-        }
+        if (total - 2 >= 0) all[total - 2].className = "number fade";
+        if (total - 3 >= 0) all[total - 3].className = "number small";
+        if (total - 4 >= 0) all[total - 4].className = "number hidden";
+      }
+    }
+
+    function updateNav() {
+      let allNav = navTable.querySelectorAll(".nav-item");
+      allNav.forEach(el => el.classList.remove("highlight"));
+      if (allNav.length > 0) {
+        allNav[allNav.length - 1].classList.add("highlight");
+        navTable.scrollTop = navTable.scrollHeight; // auto scroll to latest
       }
     }
   </script>
 </body>
 </html>
-
