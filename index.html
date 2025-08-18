@@ -1,73 +1,155 @@
-import { useState, useRef, useEffect } from "react";
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cobaan with Counter</title>
+  <style>
+    body {
+      background-color: #f5f7fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
 
-export default function NumberScroller() {
-  const [numbers] = useState(
-    Array.from({ length: 100 }, (_, i) => (i + 1).toString().padStart(4, "0")
-  );
-  const scrollerRef = useRef(null);
+    /* The main box */
+    .box {
+      position: relative;
+      background: white;
+      border: 2px solid #333;
+      padding: 40px 60px;
+      font-size: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
 
-  // Initialize to show 0001 centered with 0002-0004 below
-  useEffect(() => {
-    if (scrollerRef.current) {
-      const firstItem = scrollerRef.current.querySelector("[data-value='0001']");
-      if (firstItem) {
-        const containerHeight = scrollerRef.current.clientHeight;
-        firstItem.scrollIntoView({
-          block: "center",
-          behavior: "auto"
-        });
+    /* Number area */
+    .numbers {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 80px;
+    }
+
+    .number {
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    /* Current number */
+    .current {
+      font-size: 36px;
+      color: black;
+      opacity: 1;
+    }
+
+    /* One step away */
+    .fade {
+      font-size: 24px;
+      color: grey;
+      opacity: 0.6;
+    }
+
+    /* Two steps away */
+    .small {
+      font-size: 16px;
+      color: lightgrey;
+      opacity: 0.4;
+    }
+
+    /* Gone */
+    .hidden {
+      display: none;
+    }
+
+    /* The + button */
+    .circle {
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    cobaan
+    <div class="numbers" id="numbers"></div>
+    <div class="circle" id="addBtn">+</div>
+  </div>
+
+  <script>
+    let today = new Date().toISOString().split("T")[0];
+    let counter = 0;
+
+    const addBtn = document.getElementById("addBtn");
+    const numbersDiv = document.getElementById("numbers");
+
+    addBtn.addEventListener("click", function () {
+      let now = new Date().toISOString().split("T")[0];
+
+      // reset if new day
+      if (now !== today) {
+        today = now;
+        counter = 0;
+        numbersDiv.innerHTML = "";
+      }
+
+      counter++;
+      let formatted = String(counter).padStart(4, "0");
+
+      // add new number element
+      let span = document.createElement("div");
+      span.textContent = formatted;
+      span.classList.add("number", "current");
+
+      // Insert as middle (current stays in center, older above, future below)
+      numbersDiv.appendChild(span);
+
+      // update all numbers appearance
+      updateStyles();
+    });
+
+    function updateStyles() {
+      let all = numbersDiv.querySelectorAll(".number");
+      let total = all.length;
+
+      all.forEach((el, index) => {
+        el.className = "number hidden"; // reset all first
+      });
+
+      if (total > 0) {
+        let current = all[total - 1];
+        current.className = "number current";
+
+        if (total - 2 >= 0) {
+          all[total - 2].className = "number fade";
+        }
+        if (total - 3 >= 0) {
+          all[total - 3].className = "number small";
+        }
+        if (total - 4 >= 0) {
+          all[total - 4].className = "number hidden";
+        }
       }
     }
-  }, []);
-
-  return (
-    <div style={styles.container}>
-      <div ref={scrollerRef} style={styles.scroller}>
-        {numbers.map((num) => (
-          <div 
-            key={num} 
-            data-value={num}
-            style={{
-              ...styles.number,
-              ...(num === "0001" && styles.centerNumber)
-            }}
-          >
-            {num}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    backgroundColor: "#f5f5f5"
-  },
-  scroller: {
-    height: "350px",
-    width: "100px",
-    overflowY: "scroll",
-    scrollSnapType: "y mandatory",
-    scrollbarWidth: "thin",
-    fontFamily: "monospace"
-  },
-  number: {
-    height: "50px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    scrollSnapAlign: "center",
-    color: "#999",
-    fontSize: "14px"
-  },
-  centerNumber: {
-    color: "#000",
-    fontSize: "18px",
-    fontWeight: "bold"
-  }
-};
+  </script>
+</body>
+</html>
