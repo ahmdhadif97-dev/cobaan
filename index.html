@@ -2,230 +2,167 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Number Counter</title>
+  <title>Scrollable Counter</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: stretch;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Center section */
-    .center-numbers {
-      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+    }
+
+    .counter-container {
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 80%;
+      overflow-y: auto;
+      scrollbar-width: thin;
     }
 
     .number {
-      font-size: 40px;
-      font-weight: bold;
+      font-size: 1.5rem;
+      color: gray;
+      margin: 5px 0;
+      position: relative;
       transition: all 0.3s ease;
     }
 
-    .past {
-      color: grey;
-      font-size: 24px;
-      opacity: 0.6;
-    }
-
-    .future {
-      color: grey;
-      font-size: 24px;
-      opacity: 0.6;
+    .displayed {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: black;
     }
 
     .current {
-      font-size: 60px;
-      color: black;
+      border-bottom: 2px solid blue;
+    }
+
+    .skipped {
+      color: red;
+    }
+
+    .actions {
+      position: absolute;
+      right: -60px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .number.displayed:hover .actions {
       opacity: 1;
     }
 
-    /* Skipped note left of counter */
-    .skipped-note {
-      position: absolute;
-      left: 20%;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      color: red;
-      text-align: right;
-    }
-
-    /* Right navigation table */
-    .nav {
-      width: 150px;
-      background: #f9f9f9;
-      padding: 10px;
-      overflow-y: auto;
-      border-left: 2px solid #ccc;
-    }
-
-    .nav-number {
-      padding: 5px;
-      text-align: center;
-      font-size: 18px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .highlight {
-      background: #1976d2;
-      color: white;
-      font-weight: bold;
-      border-radius: 5px;
-    }
-
-    /* Mark skipped in red */
-    .skipped {
-      color: red;
-      font-weight: bold;
-    }
-
-    /* Tick and cross icons */
-    .actions {
-      position: absolute;
-      right: 5px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: none;
-      gap: 5px;
-    }
-
-    .nav-number:hover .actions {
-      display: inline-flex;
-    }
-
     .action-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
       cursor: pointer;
-      font-size: 14px;
-      padding: 2px 4px;
-      border-radius: 3px;
+      font-size: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
     .tick {
-      color: green;
+      background: #4CAF50;
+      color: white;
     }
 
     .cross {
-      color: red;
+      background: #f44336;
+      color: white;
     }
   </style>
 </head>
 <body>
-  <div class="center-numbers" id="centerNumbers"></div>
-
-  <div class="nav" id="navTable"></div>
+  <div class="counter-container" id="counterContainer"></div>
 
   <script>
     let currentNumber = 1;
-    let skippedNumbers = new Set();
+    let displayedIndex = 0;
+    const container = document.getElementById('counterContainer');
+    const maxNumbers = 100;
+    const numbers = [];
 
     function formatNumber(num) {
       return num.toString().padStart(4, "0");
     }
 
     function renderNumbers() {
-      const centerDiv = document.getElementById("centerNumbers");
-      const navDiv = document.getElementById("navTable");
-      centerDiv.innerHTML = "";
-      navDiv.innerHTML = "";
-
-      // Show skipped numbers note
-      if (skippedNumbers.size > 0) {
-        const skippedDiv = document.createElement("div");
-        skippedDiv.className = "skipped-note";
-        skippedDiv.textContent = "Skipped: " + [...skippedNumbers].sort((a, b) => a - b).map(formatNumber).join(", ");
-        centerDiv.appendChild(skippedDiv);
-      }
-
-      // Show past numbers (up to 3 before)
-      for (let i = currentNumber - 3; i < currentNumber; i++) {
-        if (i > 0) {
-          const div = document.createElement("div");
-          div.textContent = formatNumber(i);
-          div.className = "number past";
-          centerDiv.appendChild(div);
-        }
-      }
-
-      // Show current number
-      const currentDiv = document.createElement("div");
-      currentDiv.textContent = formatNumber(currentNumber);
-      currentDiv.className = "number current";
-      centerDiv.appendChild(currentDiv);
-
-      // Show future numbers (up to 3 after)
-      for (let i = currentNumber + 1; i <= currentNumber + 3; i++) {
-        const div = document.createElement("div");
+      container.innerHTML = '';
+      for (let i = 1; i <= maxNumbers; i++) {
+        const div = document.createElement('div');
+        div.className = 'number';
         div.textContent = formatNumber(i);
-        div.className = "number future";
-        centerDiv.appendChild(div);
-      }
 
-      // Fill navigation table (show 1 to 100 for now)
-      for (let i = 1; i <= 100; i++) {
-        const navItem = document.createElement("div");
-        navItem.className = "nav-number";
+        if (i === displayedIndex) {
+          div.classList.add('displayed');
+
+          // ✅ ❌ buttons
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          const tickBtn = document.createElement('button');
+          tickBtn.className = 'action-btn tick';
+          tickBtn.textContent = '✔';
+          tickBtn.onclick = () => moveForward(i, false);
+
+          const crossBtn = document.createElement('button');
+          crossBtn.className = 'action-btn cross';
+          crossBtn.textContent = '✘';
+          crossBtn.onclick = () => moveForward(i, true);
+
+          actions.appendChild(tickBtn);
+          actions.appendChild(crossBtn);
+          div.appendChild(actions);
+        }
+
         if (i === currentNumber) {
-          navItem.classList.add("highlight");
-        }
-        if (skippedNumbers.has(i)) {
-          navItem.classList.add("skipped");
+          div.classList.add('current');
         }
 
-        // number text
-        const numText = document.createElement("span");
-        numText.textContent = formatNumber(i);
-        navItem.appendChild(numText);
+        if (numbers.includes(i)) {
+          div.classList.add('skipped');
+        }
 
-        // actions (tick + cross)
-        const actions = document.createElement("span");
-        actions.className = "actions";
-
-        const tickBtn = document.createElement("span");
-        tickBtn.textContent = "✔";
-        tickBtn.className = "action-btn tick";
-        tickBtn.onclick = (e) => {
-          e.stopPropagation();
-          currentNumber = i;
-          renderNumbers();
-        };
-
-        const crossBtn = document.createElement("span");
-        crossBtn.textContent = "✘";
-        crossBtn.className = "action-btn cross";
-        crossBtn.onclick = (e) => {
-          e.stopPropagation();
-          skippedNumbers.add(i);
-          currentNumber = i;
-          renderNumbers();
-        };
-
-        actions.appendChild(tickBtn);
-        actions.appendChild(crossBtn);
-        navItem.appendChild(actions);
-
-        navDiv.appendChild(navItem);
-      }
-
-      // Scroll nav table to current number
-      const highlight = navDiv.querySelector(".highlight");
-      if (highlight) {
-        highlight.scrollIntoView({ block: "center" });
+        container.appendChild(div);
       }
     }
 
-    // Initial render
+    function moveForward(num, isCross) {
+      if (isCross) {
+        numbers.push(num);
+      }
+      displayedIndex++;
+      currentNumber++;
+      renderNumbers();
+      scrollToDisplayed();
+    }
+
+    function scrollToDisplayed() {
+      const displayed = document.querySelector('.displayed');
+      if (displayed) {
+        displayed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    // Start with number 1
+    displayedIndex = 1;
+    currentNumber = 1;
     renderNumbers();
+    scrollToDisplayed();
   </script>
 </body>
 </html>
+
