@@ -1,213 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Number Picker</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      height: 100vh;
-      background: #f4f4f4;
-    }
+import { useState, useEffect, useRef } from "react";
+import { Star } from "lucide-react";
 
-    .search-container {
-      margin-bottom: 20px;
-    }
+export default function NumberCounter() {
+  const [displayed, setDisplayed] = useState(1); // DN
+  const [starred, setStarred] = useState(null); // SN
+  const [current, setCurrent] = useState(1); // CN (fixed for now)
+  const containerRef = useRef(null);
 
-    .search-container input {
-      padding: 8px;
-      font-size: 16px;
-      width: 120px;
-      text-align: center;
-    }
+  const itemHeight = 50; // px
+  const totalNumbers = 300;
+  const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
 
-    .search-container button {
-      padding: 8px 12px;
-      font-size: 18px;
-      margin-left: 6px;
-      cursor: pointer;
-    }
+  // Scroll to value helper
+  const scrollToValue = (value, smooth = true) => {
+    if (!containerRef.current) return;
+    const targetIndex = value - 1;
+    const scrollTop =
+      targetIndex * itemHeight -
+      (containerRef.current.clientHeight / 2 - itemHeight / 2);
+    containerRef.current.scrollTo({
+      top: scrollTop,
+      behavior: smooth ? "smooth" : "auto",
+    });
+  };
 
-    .picker-container {
-      width: 100px;
-      height: 350px; /* shows 7 items (50px each) */
-      overflow-y: auto;
-      scroll-behavior: smooth;
-      border: 2px solid #333;
-      border-radius: 8px;
-      background: #fff;
-    }
+  // Center on first number at mount
+  useEffect(() => {
+    scrollToValue(1, false);
+  }, []);
 
-    .number {
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      color: gray;
-    }
+  // Update displayed number when scrolling
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const center =
+      containerRef.current.scrollTop + containerRef.current.clientHeight / 2;
+    const index = Math.round(center / itemHeight);
+    const newValue = Math.min(totalNumbers, Math.max(1, index + 1));
+    setDisplayed(newValue);
+  };
 
-    .center {
-      font-size: 32px;
-      font-weight: bold;
-      color: black;
-    }
-
-    .star-btn {
-      font-size: 22px;
-      cursor: pointer;
-      margin-left: 6px;
-      color: gold;
-      user-select: none;
-    }
-
-    .status {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="Go to number..." />
-    <button id="searchStarBtn">★ Star</button>
-  </div>
-
-  <div class="picker-container" id="picker"></div>
-
-  <div class="status">
-    Starred: <span id="starredNum">None</span><br>
-    Current: <span id="currentNum">0001</span><br>
-    Difference: <span id="diffNum">0</span>
-  </div>
-
-  <script>
-    class NumberPicker {
-      constructor() {
-        this.container = document.getElementById("picker");
-        this.starredNumberDisplay = document.getElementById("starredNum");
-        this.currentNumberDisplay = document.getElementById("currentNum");
-        this.diffDisplay = document.getElementById("diffNum");
-
-        this.itemHeight = 50;
-        this.totalNumbers = 300;
-        this.starredNumber = null;
-        this.currentNumber = 1;
-
-        this.renderNumbers();
-        this.scrollToValue(1, false);
-        this.setupScroll();
-        this.setupSearch();
-      }
-
-      renderNumbers() {
-        for (let i = 1; i <= this.totalNumbers; i++) {
-          const div = document.createElement("div");
-          div.className = "number";
-          div.textContent = String(i).padStart(4, "0");
-
-          div.addEventListener("click", () => {
-            this.scrollToValue(i);
-          });
-
-          div.addEventListener("dblclick", () => {
-            this.starredNumber = i;
-            this.updateStarred();
-          });
-
-          this.container.appendChild(div);
-        }
-      }
-
-      setupScroll() {
-        this.container.addEventListener("scroll", () => {
-          const center = this.container.scrollTop + this.container.clientHeight / 2;
-          const index = Math.round(center / this.itemHeight) - 1;
-          const newValue = Math.min(this.totalNumbers, Math.max(1, index + 1));
-          this.currentNumber = newValue;
-          this.updateCenter();
-        });
-      }
-
-      setupSearch() {
-        const searchInput = document.getElementById("searchInput");
-        const searchStarBtn = document.getElementById("searchStarBtn");
-
-        searchInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") {
-            const value = parseInt(searchInput.value, 10);
-            if (value >= 1 && value <= this.totalNumbers) {
-              this.scrollToValue(value);
-              setTimeout(() => this.forceCenter(value), 300);
-            }
-          }
-        });
-
-        searchInput.addEventListener("input", (e) => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, "");
-        });
-
-        searchStarBtn.addEventListener("click", () => {
-          const value = parseInt(searchInput.value, 10);
-          if (value >= 1 && value <= this.totalNumbers) {
-            this.starredNumber = value;
-            this.updateStarred();
-            this.updateCenter();
-          }
-        });
-      }
-
-      scrollToValue(value, smooth = true) {
-        const targetIndex = value - 1;
-        const scrollTop = targetIndex * this.itemHeight - (this.container.clientHeight / 2 - this.itemHeight / 2);
-        this.container.scrollTo({
-          top: scrollTop,
-          behavior: smooth ? "smooth" : "auto"
-        });
-      }
-
-      forceCenter(value) {
-        this.currentNumber = value;
-        this.updateCenter();
-      }
-
-      updateCenter() {
-        const items = this.container.querySelectorAll(".number");
-        items.forEach((item, index) => {
-          item.classList.remove("center");
-          item.style.color = "gray";
-          if (index + 1 === this.currentNumber) {
-            item.classList.add("center");
-            item.style.color = "black";
-          }
-        });
-
-        this.currentNumberDisplay.textContent = String(this.currentNumber).padStart(4, "0");
-        this.updateDifference();
-      }
-
-      updateStarred() {
-        this.starredNumberDisplay.textContent = String(this.starredNumber).padStart(4, "0");
-        this.updateDifference();
-      }
-
-      updateDifference() {
-        if (this.starredNumber !== null) {
-          this.diffDisplay.textContent = this.currentNumber - this.starredNumber;
-        } else {
-          this.diffDisplay.textContent = "0";
-        }
+  // Search handler
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      const inputValue = parseInt(e.target.value, 10);
+      if (inputValue >= 1 && inputValue <= totalNumbers) {
+        setDisplayed(inputValue);
+        scrollToValue(inputValue);
       }
     }
+  };
 
-    new NumberPicker();
-  </script>
-</body>
-</html>
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+      {/* Search Box */}
+      <input
+        type="number"
+        placeholder="Go to number..."
+        className="mb-4 p-2 border rounded"
+        onKeyDown={handleKeyDown}
+      />
+
+      <div className="flex gap-6 items-center">
+        {/* Info Left */}
+        <div className="text-sm text-left">
+          <div>Current Number = {String(current).padStart(4, "0")}</div>
+          <div>
+            Starred ={" "}
+            {starred ? String(starred).padStart(4, "0") : "None"}
+          </div>
+          {starred && (
+            <div>
+              {Math.abs(starred - current)} turns more
+            </div>
+          )}
+        </div>
+
+        {/* Number List */}
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="h-[350px] w-[120px] overflow-y-scroll no-scrollbar text-center"
+        >
+          {numbers.map((num) => (
+            <div
+              key={num}
+              className={`h-[50px] flex items-center justify-center ${
+                num === displayed
+                  ? "text-black font-bold text-2xl"
+                  : "text-gray-400 text-lg"
+              }`}
+            >
+              {String(num).padStart(4, "0")}
+              {num === displayed && (
+                <button
+                  onClick={() =>
+                    setStarred(starred === num ? null : num)
+                  }
+                  className="ml-2 p-1 rounded bg-yellow-200 hover:bg-yellow-300"
+                >
+                  <Star
+                    className={`w-4 h-4 ${
+                      starred === num ? "fill-black" : ""
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
