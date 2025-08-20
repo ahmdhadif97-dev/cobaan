@@ -1,113 +1,91 @@
 import { useState, useEffect, useRef } from "react";
-import { Star } from "lucide-react";
 
-export default function NumberCounter() {
-  const [displayed, setDisplayed] = useState(1); // DN
-  const [starred, setStarred] = useState(null); // SN
-  const [current, setCurrent] = useState(1); // CN (fixed for now)
+export default function NumberScroller() {
+  const [cn] = useState(1); // Constant number (CN = 0001)
+  const [dn, setDn] = useState(1); // Displayed number
+  const [sn, setSn] = useState(null); // Starred number
   const containerRef = useRef(null);
 
-  const itemHeight = 50; // px
-  const totalNumbers = 300;
-  const numbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
+  // Generate list of numbers (1–9999 for example)
+  const numbers = Array.from({ length: 9999 }, (_, i) => i + 1);
 
-  // Scroll to value helper
-  const scrollToValue = (value, smooth = true) => {
-    if (!containerRef.current) return;
-    const targetIndex = value - 1;
-    const scrollTop =
-      targetIndex * itemHeight -
-      (containerRef.current.clientHeight / 2 - itemHeight / 2);
-    containerRef.current.scrollTo({
-      top: scrollTop,
-      behavior: smooth ? "smooth" : "auto",
-    });
-  };
-
-  // Center on first number at mount
+  // Center scroll on DN when component mounts
   useEffect(() => {
-    scrollToValue(1, false);
+    if (containerRef.current) {
+      const itemHeight = 50; // must match item height in Tailwind
+      containerRef.current.scrollTop = (dn - 1) * itemHeight;
+    }
   }, []);
 
-  // Update displayed number when scrolling
+  // Handle scroll to update DN
   const handleScroll = () => {
     if (!containerRef.current) return;
-    const center =
-      containerRef.current.scrollTop + containerRef.current.clientHeight / 2;
-    const index = Math.round(center / itemHeight);
-    const newValue = Math.min(totalNumbers, Math.max(1, index + 1));
-    setDisplayed(newValue);
+    const itemHeight = 50;
+    const scrollTop = containerRef.current.scrollTop;
+    const index = Math.round(scrollTop / itemHeight);
+    setDn(index + 1);
   };
 
-  // Search handler
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      const inputValue = parseInt(e.target.value, 10);
-      if (inputValue >= 1 && inputValue <= totalNumbers) {
-        setDisplayed(inputValue);
-        scrollToValue(inputValue);
-      }
+  // Handle star toggle
+  const toggleStar = () => {
+    if (sn === dn) {
+      setSn(null);
+    } else {
+      setSn(dn);
     }
   };
 
+  // SN value: starred DN, else CN
+  const snValue = sn ?? cn;
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-      {/* Search Box */}
-      <input
-        type="number"
-        placeholder="Go to number..."
-        className="mb-4 p-2 border rounded"
-        onKeyDown={handleKeyDown}
-      />
-
-      <div className="flex gap-6 items-center">
-        {/* Info Left */}
-        <div className="text-sm text-left">
-          <div>Current Number = {String(current).padStart(4, "0")}</div>
-          <div>
-            Starred ={" "}
-            {starred ? String(starred).padStart(4, "0") : "None"}
-          </div>
-          {starred && (
-            <div>
-              {Math.abs(starred - current)} turns more
-            </div>
-          )}
+    <div className="flex h-screen items-center justify-center bg-gray-100">
+      {/* Left panel */}
+      <div className="w-1/3 flex flex-col items-center justify-center space-y-4">
+        <div className="text-blue-500 text-2xl font-bold">
+          CN = {String(cn).padStart(4, "0")}
         </div>
+        <div className="text-black text-3xl font-bold">
+          DN = {String(dn).padStart(4, "0")}
+        </div>
+        <div className="text-green-600 text-2xl font-bold">
+          SN = {String(snValue).padStart(4, "0")}
+          {sn ? " (starred)" : ""}
+        </div>
+      </div>
 
-        {/* Number List */}
+      {/* Center scrollable DN list */}
+      <div className="relative w-1/3 h-[350px] overflow-hidden">
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="h-[350px] w-[120px] overflow-y-scroll no-scrollbar text-center"
+          className="h-full overflow-y-scroll scroll-smooth no-scrollbar"
+          style={{ scrollSnapType: "y mandatory" }}
         >
           {numbers.map((num) => (
             <div
               key={num}
-              className={`h-[50px] flex items-center justify-center ${
-                num === displayed
-                  ? "text-black font-bold text-2xl"
-                  : "text-gray-400 text-lg"
+              style={{ height: "50px", scrollSnapAlign: "center" }}
+              className={`flex items-center justify-center transition-all duration-200 ${
+                num === dn
+                  ? "text-black text-3xl font-bold"
+                  : "text-gray-400 text-xl"
               }`}
             >
               {String(num).padStart(4, "0")}
-              {num === displayed && (
-                <button
-                  onClick={() =>
-                    setStarred(starred === num ? null : num)
-                  }
-                  className="ml-2 p-1 rounded bg-yellow-200 hover:bg-yellow-300"
-                >
-                  <Star
-                    className={`w-4 h-4 ${
-                      starred === num ? "fill-black" : ""
-                    }`}
-                  />
-                </button>
-              )}
             </div>
           ))}
         </div>
+
+        {/* Star icon */}
+        <button
+          onClick={toggleStar}
+          className={`absolute right-4 top-1/2 -translate-y-1/2 text-2xl ${
+            sn === dn ? "text-yellow-500" : "text-gray-400"
+          }`}
+        >
+          ★
+        </button>
       </div>
     </div>
   );
