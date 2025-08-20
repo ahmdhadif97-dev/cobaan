@@ -39,53 +39,34 @@ export default function NumberScroller() {
   const snValue = sn ?? cn;
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
+    <div className="flex gap-8 p-6">
       {/* Left panel */}
-      <div className="w-1/3 flex flex-col items-center justify-center space-y-4">
-        <div className="text-blue-500 text-2xl font-bold">
-          CN = {String(cn).padStart(4, "0")}
-        </div>
-        <div className="text-black text-3xl font-bold">
-          DN = {String(dn).padStart(4, "0")}
-        </div>
-        <div className="text-green-600 text-2xl font-bold">
-          SN = {String(snValue).padStart(4, "0")} {sn ? " (starred)" : ""}
-        </div>
+      <div className="w-48 p-4 rounded-2xl shadow bg-gray-50">
+        <p className="text-gray-700">
+          <span className="font-bold">CN:</span>{" "}
+          {String(cn).padStart(4, "0")}
+        </p>
+        <p className="text-blue-600 font-bold text-xl">
+          <span className="font-bold">DN:</span>{" "}
+          {String(dn).padStart(4, "0")}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-bold">SN:</span>{" "}
+          {String(snValue).padStart(4, "0")} {sn ? "(starred)" : ""}
+        </p>
       </div>
 
       {/* Center scrollable DN list */}
-      <div className="relative w-1/3 h-[350px] overflow-hidden">
-        <div
-          ref={containerRef}
-          onScroll={handleScroll}
-          className="h-full overflow-y-scroll scroll-smooth no-scrollbar"
-          style={{ scrollSnapType: "y mandatory" }}
-        >
-          {numbers.map((num) => (
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="h-64 w-32 overflow-y-scroll snap-y snap-mandatory scrollbar-hide border rounded-xl"
+      >
+        {numbers.map((num) => {
+          const isActive = num === dn;
+          return (
             <div
               key={num}
-              style={{ height: "50px", scrollSnapAlign: "center" }}
-              className={`flex items-center justify-center transition-all duration-200 ${
-                num === dn
-                  ? "text-black text-3xl font-bold"
-                  : "text-gray-400 text-xl"
-              }`}
-            >
-              {String(num).padStart(4, "0")}
-            </div>
-          ))}
-        </div>
-
-        {/* Star icon */}
-        <button
-          onClick={toggleStar}
-          className={`absolute right-4 top-1/2 -translate-y-1/2 text-2xl ${
-            sn === dn ? "text-yellow-500" : "text-gray-400"
-          }`}
-        >
-          ★
-        </button>
-      </div>
-    </div>
-  );
-}
+              className={`h-[50px] flex items-center justify-center snap-center ${
+                isActive
+                  ? "text-blue-600 text-2xl
