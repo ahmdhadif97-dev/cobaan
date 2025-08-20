@@ -69,4 +69,25 @@ export default function NumberScroller() {
               key={num}
               className={`h-[50px] flex items-center justify-center snap-center ${
                 isActive
-                  ? "text-blue-600 text-2xl
+                  ? "text-blue-600 text-2xl font-bold"
+                  : "text-gray-500 text-lg"
+              }`}
+            >
+              {String(num).padStart(4, "0")}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Star icon */}
+      <button
+        onClick={toggleStar}
+        className={`text-4xl ${
+          sn === dn ? "text-yellow-400" : "text-gray-400"
+        }`}
+      >
+        ★
+      </button>
+    </div>
+  );
+}
