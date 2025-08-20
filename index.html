@@ -49,8 +49,7 @@ export default function NumberScroller() {
           DN = {String(dn).padStart(4, "0")}
         </div>
         <div className="text-green-600 text-2xl font-bold">
-          SN = {String(snValue).padStart(4, "0")}
-          {sn ? " (starred)" : ""}
+          SN = {String(snValue).padStart(4, "0")} {sn ? " (starred)" : ""}
         </div>
       </div>
 
