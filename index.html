@@ -6,25 +6,17 @@ export default function NumberScroller() {
   const [dn, setDn] = useState(1); // Display number
   const [sn, setSn] = useState(null); // Starred number
   const [inputVal, setInputVal] = useState("");
-  const containerRef = useRef(null);
 
+  const containerRef = useRef(null);
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
-  // Scroll to DN on mount or change
+  // Scroll to DN when mounted or updated
   useEffect(() => {
     if (containerRef.current) {
       const itemHeight = 60;
       containerRef.current.scrollTop = (dn - 1) * itemHeight;
     }
   }, [dn]);
-
-  // Handle scroll -> update DN
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const itemHeight = 60;
-    const index = Math.round(containerRef.current.scrollTop / itemHeight);
-    setDn(index + 1);
-  };
 
   // Handle star click
   const toggleStar = (value) => {
@@ -38,26 +30,21 @@ export default function NumberScroller() {
   };
 
   return (
-    <div className="flex flex-col items-center p-6 space-y-4">
+    <div className="flex flex-col items-center justify-center h-screen space-y-6">
       {/* Top bar */}
       <div className="flex items-center space-x-4">
         {/* CN counter */}
-        <div
-          className={`px-4 py-2 rounded-lg font-bold bg-blue-600 text-white ${
-            cn === dn ? "text-xl" : "text-base"
-          }`}
-        >
+        <div className="bg-blue-600 text-white px-4 py-2 rounded text-lg font-bold">
           {String(cn).padStart(4, "0")}
         </div>
 
         {/* Starred input + star */}
         <div className="flex items-center space-x-2">
           <input
-            type="text"
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
-            className="border px-2 py-1 w-20 text-center rounded"
             placeholder="----"
+            className="border px-2 py-1 w-20 text-center rounded"
           />
           <button
             onClick={() => {
@@ -67,7 +54,9 @@ export default function NumberScroller() {
                 toggleStar(num);
               }
             }}
-            className={`p-1 rounded-full border-2 border-yellow-400`}
+            className={`p-1 rounded-full border-2 ${
+              sn ? "border-yellow-400 text-yellow-400" : "border-yellow-400 text-white"
+            }`}
           >
             <Star
               className={`w-5 h-5 ${
@@ -78,40 +67,23 @@ export default function NumberScroller() {
         </div>
       </div>
 
-      {/* Scrollable list */}
-      <div
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="overflow-y-scroll h-[300px] w-28 no-scrollbar relative"
-        style={{ scrollSnapType: "y mandatory" }}
-      >
-        {numbers.map((num) => (
-          <div
-            key={num}
-            className="h-[60px] flex items-center justify-center scroll-snap-align-center text-gray-400"
-          >
-            {String(num).padStart(4, "0")}
-          </div>
-        ))}
-
-        {/* DN fixed in center with star */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-2 pointer-events-none">
-          <span className="text-4xl font-bold pointer-events-none">
-            {String(dn).padStart(4, "0")}
-          </span>
-          <button
-            onClick={() => toggleStar(dn)}
-            className="p-1 rounded-full border-2 border-yellow-400 pointer-events-auto"
-          >
-            <Star
-              className={`w-6 h-6 ${
-                sn === dn
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-white"
-              }`}
-            />
-          </button>
+      {/* Center Display Number */}
+      <div className="flex items-center space-x-3">
+        <div className="text-5xl font-bold">
+          {String(dn).padStart(4, "0")}
         </div>
+        <button
+          onClick={() => toggleStar(dn)}
+          className={`p-1 rounded-full border-2 ${
+            sn === dn ? "border-yellow-400 text-yellow-400" : "border-yellow-400 text-white"
+          }`}
+        >
+          <Star
+            className={`w-6 h-6 ${
+              sn === dn ? "fill-yellow-400 text-yellow-400" : "text-white"
+            }`}
+          />
+        </button>
       </div>
     </div>
   );
