@@ -8,10 +8,9 @@ export default function NumberScroller() {
   const [inputVal, setInputVal] = useState("");
   const containerRef = useRef(null);
 
-  // Generate numbers
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
-  // Scroll to DN
+  // Scroll to DN on mount or change
   useEffect(() => {
     if (containerRef.current) {
       const itemHeight = 60;
@@ -27,7 +26,7 @@ export default function NumberScroller() {
     setDn(index + 1);
   };
 
-  // Handle star click (both icons sync)
+  // Handle star click
   const toggleStar = (value) => {
     if (sn === value) {
       setSn(null);
@@ -40,17 +39,18 @@ export default function NumberScroller() {
 
   return (
     <div className="flex flex-col items-center p-6 space-y-4">
-      {/* Top info bar */}
+      {/* Top bar */}
       <div className="flex items-center space-x-4">
+        {/* CN counter */}
         <div
-          className={`px-4 py-2 rounded-lg font-bold ${
+          className={`px-4 py-2 rounded-lg font-bold bg-blue-600 text-white ${
             cn === dn ? "text-xl" : "text-base"
-          } bg-blue-600 text-white`}
+          }`}
         >
-          Counter = {String(cn).padStart(4, "0")}
+          {String(cn).padStart(4, "0")}
         </div>
 
-        {/* Starred input + star button */}
+        {/* Starred input + star */}
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -67,13 +67,11 @@ export default function NumberScroller() {
                 toggleStar(num);
               }
             }}
-            className={`p-1 rounded-full border-2 ${
-              sn ? "border-yellow-400" : "border-yellow-400"
-            }`}
+            className={`p-1 rounded-full border-2 border-yellow-400`}
           >
             <Star
               className={`w-5 h-5 ${
-                sn ? "fill-yellow-400 text-yellow-400" : "text-yellow-400"
+                sn ? "fill-yellow-400 text-yellow-400" : "text-white"
               }`}
             />
           </button>
@@ -84,40 +82,36 @@ export default function NumberScroller() {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="overflow-y-scroll h-[300px] w-28 no-scrollbar"
-        style={{
-          scrollSnapType: "y mandatory",
-        }}
+        className="overflow-y-scroll h-[300px] w-28 no-scrollbar relative"
+        style={{ scrollSnapType: "y mandatory" }}
       >
         {numbers.map((num) => (
           <div
             key={num}
-            className={`h-[60px] flex items-center justify-center scroll-snap-align-center ${
-              dn === num ? "text-2xl font-bold" : "text-gray-400"
-            }`}
+            className="h-[60px] flex items-center justify-center scroll-snap-align-center text-gray-400"
           >
             {String(num).padStart(4, "0")}
           </div>
         ))}
-      </div>
 
-      {/* DN with star icon */}
-      <div className="flex items-center space-x-2 mt-4">
-        <span className="text-4xl font-bold">
-          {String(dn).padStart(4, "0")}
-        </span>
-        <button
-          onClick={() => toggleStar(dn)}
-          className={`p-1 rounded-full border-2 border-yellow-400`}
-        >
-          <Star
-            className={`w-6 h-6 ${
-              sn === dn
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-yellow-400"
-            }`}
-          />
-        </button>
+        {/* DN fixed in center with star */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-2 pointer-events-none">
+          <span className="text-4xl font-bold pointer-events-none">
+            {String(dn).padStart(4, "0")}
+          </span>
+          <button
+            onClick={() => toggleStar(dn)}
+            className="p-1 rounded-full border-2 border-yellow-400 pointer-events-auto"
+          >
+            <Star
+              className={`w-6 h-6 ${
+                sn === dn
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-white"
+              }`}
+            />
+          </button>
+        </div>
       </div>
     </div>
   );
