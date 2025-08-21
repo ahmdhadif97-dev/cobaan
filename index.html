@@ -1,184 +1,124 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-    .topbar {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    .current {
-      background: #0077ff;
-      color: white;
-      font-weight: bold;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    .current.big {
-      font-size: 20px;
-    }
-    .starred {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .star-input {
-      width: 60px;
-      padding: 3px;
-      text-align: center;
-      font-size: 14px;
-    }
-    .star-btn {
-      background: none;
-      border: 2px solid #ffcc00;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 18px;
-      padding: 0 4px;
-      color: transparent;
-      -webkit-text-stroke: 1px #ffcc00;
-    }
-    .star-btn.active {
-      color: #ffcc00;
-      -webkit-text-stroke: 0;
-    }
-    .turns {
-      color: #555;
-      font-size: 14px;
-    }
-    .container {
-      height: 250px;
-      overflow-y: scroll;
-      width: 120px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      text-align: center;
-      scroll-behavior: smooth;
-    }
-    .container::-webkit-scrollbar {
-      display: none; /* hide scrollbar */
-    }
-    .item {
-      height: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 16px;
-      color: #888;
-      position: relative;
-    }
-    .item.active {
-      font-size: 20px;
-      font-weight: bold;
-      color: black;
-    }
-    .item .star-btn {
-      position: absolute;
-      right: -25px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: none;
-    }
-    .item.active .star-btn {
-      display: inline-block; /* only show star beside DN */
-    }
-  </style>
-</head>
-<body>
+import { useState, useEffect, useRef } from "react";
+import { Star } from "lucide-react";
 
-  <div class="topbar">
-    <div id="cn" class="current">0001</div>
-    <div class="starred">
-      <input id="starInput" class="star-input" placeholder="0000">
-      <button id="topStar" class="star-btn">★</button>
+export default function NumberScroller() {
+  const [cn] = useState(1); // Constant number
+  const [dn, setDn] = useState(1); // Display number
+  const [sn, setSn] = useState(null); // Starred number
+  const [inputVal, setInputVal] = useState("");
+  const containerRef = useRef(null);
+
+  // Generate numbers
+  const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+
+  // Scroll to DN
+  useEffect(() => {
+    if (containerRef.current) {
+      const itemHeight = 60;
+      containerRef.current.scrollTop = (dn - 1) * itemHeight;
+    }
+  }, [dn]);
+
+  // Handle scroll -> update DN
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const itemHeight = 60;
+    const index = Math.round(containerRef.current.scrollTop / itemHeight);
+    setDn(index + 1);
+  };
+
+  // Handle star click (both icons sync)
+  const toggleStar = (value) => {
+    if (sn === value) {
+      setSn(null);
+      setInputVal("");
+    } else {
+      setSn(value);
+      setInputVal(String(value).padStart(4, "0"));
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center p-6 space-y-4">
+      {/* Top info bar */}
+      <div className="flex items-center space-x-4">
+        <div
+          className={`px-4 py-2 rounded-lg font-bold ${
+            cn === dn ? "text-xl" : "text-base"
+          } bg-blue-600 text-white`}
+        >
+          Counter = {String(cn).padStart(4, "0")}
+        </div>
+
+        {/* Starred input + star button */}
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            className="border px-2 py-1 w-20 text-center rounded"
+            placeholder="----"
+          />
+          <button
+            onClick={() => {
+              const num = parseInt(inputVal, 10);
+              if (!isNaN(num) && num >= 1 && num <= numbers.length) {
+                setDn(num);
+                toggleStar(num);
+              }
+            }}
+            className={`p-1 rounded-full border-2 ${
+              sn ? "border-yellow-400" : "border-yellow-400"
+            }`}
+          >
+            <Star
+              className={`w-5 h-5 ${
+                sn ? "fill-yellow-400 text-yellow-400" : "text-yellow-400"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable list */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="overflow-y-scroll h-[300px] w-28 no-scrollbar"
+        style={{
+          scrollSnapType: "y mandatory",
+        }}
+      >
+        {numbers.map((num) => (
+          <div
+            key={num}
+            className={`h-[60px] flex items-center justify-center scroll-snap-align-center ${
+              dn === num ? "text-2xl font-bold" : "text-gray-400"
+            }`}
+          >
+            {String(num).padStart(4, "0")}
+          </div>
+        ))}
+      </div>
+
+      {/* DN with star icon */}
+      <div className="flex items-center space-x-2 mt-4">
+        <span className="text-4xl font-bold">
+          {String(dn).padStart(4, "0")}
+        </span>
+        <button
+          onClick={() => toggleStar(dn)}
+          className={`p-1 rounded-full border-2 border-yellow-400`}
+        >
+          <Star
+            className={`w-6 h-6 ${
+              sn === dn
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-yellow-400"
+            }`}
+          />
+        </button>
+      </div>
     </div>
-    <div class="turns" id="turns">0 turns more</div>
-  </div>
-
-  <div id="container" class="container"></div>
-
-  <script>
-    const container = document.getElementById("container");
-    const cnValue = 1;
-    let dn = 1;
-    let sn = null;
-
-    // Generate numbers
-    for (let i = 1; i <= 100; i++) {
-      const div = document.createElement("div");
-      div.className = "item";
-      div.textContent = String(i).padStart(4, "0");
-
-      const btn = document.createElement("button");
-      btn.className = "star-btn";
-      btn.innerHTML = "★";
-      btn.onclick = () => toggleStar(i);
-      div.appendChild(btn);
-
-      container.appendChild(div);
-    }
-
-    function updateLabels() {
-      const cnDiv = document.getElementById("cn");
-      cnDiv.textContent = String(cnValue).padStart(4, "0");
-
-      // Highlight CN if equals DN
-      if (cnValue === dn) {
-        cnDiv.classList.add("big");
-      } else {
-        cnDiv.classList.remove("big");
-      }
-
-      // Show turns
-      let turns = sn ? Math.abs(sn - cnValue) + " turns more" : "";
-      document.getElementById("turns").textContent = turns;
-
-      // Highlight active number
-      [...container.children].forEach((child, i) => {
-        child.className = "item" + (i + 1 === dn ? " active" : "");
-        const starBtn = child.querySelector(".star-btn");
-        if (i + 1 === dn) {
-          starBtn.classList.toggle("active", sn === dn);
-        }
-      });
-
-      // Sync top star
-      document.getElementById("topStar").classList.toggle("active", sn !== null);
-      document.getElementById("starInput").value = sn ? String(sn).padStart(4, "0") : "";
-    }
-
-    container.addEventListener("scroll", () => {
-      const itemHeight = 50;
-      const index = Math.round(container.scrollTop / itemHeight);
-      dn = index + 1;
-      updateLabels();
-    });
-
-    function toggleStar(num) {
-      sn = (sn === num ? null : num);
-      updateLabels();
-    }
-
-    // Top star button
-    document.getElementById("topStar").addEventListener("click", () => {
-      const val = parseInt(document.getElementById("starInput").value, 10);
-      if (!isNaN(val) && val >= 1 && val <= 100) {
-        dn = sn = val;
-        container.scrollTop = (val - 1) * 50;
-        updateLabels();
-      }
-    });
-
-    updateLabels();
-  </script>
-</body>
-</html>
+  );
+}
