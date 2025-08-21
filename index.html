@@ -1,76 +1,57 @@
-import { useState, useEffect, useRef } from "react";
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .container { height: 200px; overflow-y: scroll; width: 100px; border: 1px solid #000; }
+    .item { height: 50px; display: flex; align-items: center; justify-content: center; }
+    .active { background: blue; color: white; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div>
+    <div id="cn">CN: 0001</div>
+    <div id="dn">DN: 0001</div>
+    <div id="sn">SN: 0001</div>
+    <button onclick="toggleStar()">★ Toggle Star</button>
+  </div>
 
-export default function NumberScroller() {
-  const [cn] = useState(1); // Constant number (CN = 0001)
-  const [dn, setDn] = useState(1); // Displayed number
-  const [sn, setSn] = useState(null); // Starred number
-  const containerRef = useRef(null);
+  <div id="container" class="container"></div>
 
-  // Generate numbers (demo: 1–100, change to 9999 if you want full range)
-  const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+  <script>
+    const container = document.getElementById("container");
+    const cn = 1;
+    let dn = 1;
+    let sn = null;
 
-  // Scroll to DN when mounted
-  useEffect(() => {
-    if (containerRef.current) {
+    // Generate numbers
+    for (let i = 1; i <= 100; i++) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.textContent = String(i).padStart(4, "0");
+      container.appendChild(div);
+    }
+
+    function updateLabels() {
+      document.getElementById("dn").textContent = "DN: " + String(dn).padStart(4, "0");
+      document.getElementById("sn").textContent = "SN: " + String((sn ?? cn)).padStart(4, "0") + (sn ? " (starred)" : "");
+      [...container.children].forEach((child, i) => {
+        child.className = "item" + (i + 1 === dn ? " active" : "");
+      });
+    }
+
+    container.addEventListener("scroll", () => {
       const itemHeight = 50;
-      containerRef.current.scrollTop = (dn - 1) * itemHeight;
+      const index = Math.round(container.scrollTop / itemHeight);
+      dn = index + 1;
+      updateLabels();
+    });
+
+    function toggleStar() {
+      sn = (sn === dn ? null : dn);
+      updateLabels();
     }
-  }, []);
 
-  // Update DN on scroll
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const itemHeight = 50;
-    const scrollTop = containerRef.current.scrollTop;
-    const index = Math.round(scrollTop / itemHeight);
-    setDn(index + 1);
-  };
-
-  // Toggle star
-  const toggleStar = () => {
-    if (sn === dn) {
-      setSn(null);
-    } else {
-      setSn(dn);
-    }
-  };
-
-  const snValue = sn ?? cn;
-
-  return (
-    <div className="flex gap-8 p-6">
-      {/* Left panel */}
-      <div className="space-y-2 text-lg font-mono">
-        <div>CN: {String(cn).padStart(4, "0")}</div>
-        <div>DN: {String(dn).padStart(4, "0")}</div>
-        <div>
-          SN: {String(snValue).padStart(4, "0")} {sn ? "(starred)" : ""}
-        </div>
-        <button
-          onClick={toggleStar}
-          className="px-3 py-1 border rounded bg-yellow-200 hover:bg-yellow-300"
-        >
-          ★ Toggle Star
-        </button>
-      </div>
-
-      {/* Scrollable DN list */}
-      <div
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="h-[300px] w-24 overflow-y-scroll border rounded"
-      >
-        {numbers.map((num) => (
-          <div
-            key={num}
-            className={`h-[50px] flex items-center justify-center ${
-              num === dn ? "bg-blue-500 text-white font-bold" : ""
-            }`}
-          >
-            {String(num).padStart(4, "0")}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+    updateLabels();
+  </script>
+</body>
+</html>
