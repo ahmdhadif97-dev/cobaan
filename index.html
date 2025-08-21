@@ -11,24 +11,49 @@
     }
     .topbar {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       align-items: center;
       margin-bottom: 15px;
     }
     .current {
+      background: #0077ff;
+      color: white;
       font-weight: bold;
-      color: #0077ff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .current.big {
+      font-size: 20px;
     }
     .starred {
-      background: #ffcc00;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: bold;
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      gap: 5px;
+    }
+    .star-input {
+      width: 60px;
+      padding: 3px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .star-btn {
+      background: none;
+      border: 2px solid #ffcc00;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      color: transparent;
+      -webkit-text-stroke: 1px #ffcc00;
+    }
+    .star-btn.active {
+      color: #ffcc00;
+      -webkit-text-stroke: 0;
     }
     .turns {
       color: #555;
+      font-size: 14px;
     }
     .container {
       height: 250px;
@@ -38,6 +63,9 @@
       border-radius: 8px;
       text-align: center;
       scroll-behavior: smooth;
+    }
+    .container::-webkit-scrollbar {
+      display: none; /* hide scrollbar */
     }
     .item {
       height: 50px;
@@ -53,22 +81,26 @@
       font-weight: bold;
       color: black;
     }
-    .star-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #ffcc00;
-      font-size: 18px;
+    .item .star-btn {
       position: absolute;
       right: -25px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+    }
+    .item.active .star-btn {
+      display: inline-block; /* only show star beside DN */
     }
   </style>
 </head>
 <body>
 
   <div class="topbar">
-    <div class="current" id="cn">Current = 0001</div>
-    <div class="starred" id="sn">Starred = 0001 ★</div>
+    <div id="cn" class="current">0001</div>
+    <div class="starred">
+      <input id="starInput" class="star-input" placeholder="0000">
+      <button id="topStar" class="star-btn">★</button>
+    </div>
     <div class="turns" id="turns">0 turns more</div>
   </div>
 
@@ -96,19 +128,32 @@
     }
 
     function updateLabels() {
-      document.getElementById("cn").textContent = "Current = " + String(cnValue).padStart(4, "0");
+      const cnDiv = document.getElementById("cn");
+      cnDiv.textContent = String(cnValue).padStart(4, "0");
 
-      let snText = sn
-        ? "Starred = " + String(sn).padStart(4, "0") + " ★"
-        : "Starred = None";
-      document.getElementById("sn").textContent = snText;
+      // Highlight CN if equals DN
+      if (cnValue === dn) {
+        cnDiv.classList.add("big");
+      } else {
+        cnDiv.classList.remove("big");
+      }
 
+      // Show turns
       let turns = sn ? Math.abs(sn - cnValue) + " turns more" : "";
       document.getElementById("turns").textContent = turns;
 
+      // Highlight active number
       [...container.children].forEach((child, i) => {
         child.className = "item" + (i + 1 === dn ? " active" : "");
+        const starBtn = child.querySelector(".star-btn");
+        if (i + 1 === dn) {
+          starBtn.classList.toggle("active", sn === dn);
+        }
       });
+
+      // Sync top star
+      document.getElementById("topStar").classList.toggle("active", sn !== null);
+      document.getElementById("starInput").value = sn ? String(sn).padStart(4, "0") : "";
     }
 
     container.addEventListener("scroll", () => {
@@ -122,6 +167,16 @@
       sn = (sn === num ? null : num);
       updateLabels();
     }
+
+    // Top star button
+    document.getElementById("topStar").addEventListener("click", () => {
+      const val = parseInt(document.getElementById("starInput").value, 10);
+      if (!isNaN(val) && val >= 1 && val <= 100) {
+        dn = sn = val;
+        container.scrollTop = (val - 1) * 50;
+        updateLabels();
+      }
+    });
 
     updateLabels();
   </script>
