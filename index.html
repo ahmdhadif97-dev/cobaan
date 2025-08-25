@@ -1,90 +1,236 @@
-import { useState, useEffect, useRef } from "react";
-import { Star } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
 
-export default function NumberScroller() {
-  const [cn] = useState(1); // Constant number
-  const [dn, setDn] = useState(1); // Display number
-  const [sn, setSn] = useState(null); // Starred number
-  const [inputVal, setInputVal] = useState("");
+// Format numbers as 4 digits (0001 → 9999)
+const formatNumber = (n) => n.toString().padStart(4, "0");
 
-  const containerRef = useRef(null);
-  const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+const App = () => {
+  const currentNumber = 1; // CN is fixed as 0001
+  const totalNumbers = 9999;
+  const listRef = useRef(null);
 
-  // Scroll to DN when mounted or updated
-  useEffect(() => {
-    if (containerRef.current) {
-      const itemHeight = 60;
-      containerRef.current.scrollTop = (dn - 1) * itemHeight;
-    }
-  }, [dn]);
+  const [displayNumber, setDisplayNumber] = useState(currentNumber);
+  const [starredNumber, setStarredNumber] = useState(null);
+  const [inputValue, setInputValue] = useState("");
 
-  // Handle star click
-  const toggleStar = (value) => {
-    if (sn === value) {
-      setSn(null);
-      setInputVal("");
-    } else {
-      setSn(value);
-      setInputVal(String(value).padStart(4, "0"));
+  // Scroll to a given number (center it)
+  const scrollToNumber = (num) => {
+    if (!listRef.current) return;
+    const itemHeight = 40;
+    const scrollTop = (num - 1) * itemHeight - 3 * itemHeight; // center DN
+    listRef.current.scrollTo({ top: scrollTop, behavior: "smooth" });
+  };
+
+  // Detect DN when scrolling
+  const handleScroll = () => {
+    if (!listRef.current) return;
+    const itemHeight = 40;
+    const middle = listRef.current.scrollTop + listRef.current.clientHeight / 2;
+    const dn = Math.round(middle / itemHeight);
+    if (dn >= 1 && dn <= totalNumbers) {
+      setDisplayNumber(dn);
     }
   };
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen space-y-6">
-      {/* Top bar */}
-      <div className="flex items-center space-x-4">
-        {/* CN counter */}
-        <div className="bg-blue-600 text-white px-4 py-2 rounded text-lg font-bold">
-          {String(cn).padStart(4, "0")}
-        </div>
+  // Handle star click beside DN
+  const toggleStar = (num) => {
+    if (starredNumber === num) {
+      setStarredNumber(null);
+    } else {
+      setStarredNumber(num);
+    }
+  };
 
-        {/* Starred input + star */}
-        <div className="flex items-center space-x-2">
+  // Handle star click in input (display section)
+  const confirmStar = () => {
+    const num = parseInt(inputValue, 10);
+    if (!isNaN(num) && num >= 1 && num <= totalNumbers) {
+      setStarredNumber(num);
+      scrollToNumber(num);
+    }
+  };
+
+  // Ensure scroll always centers DN on load / update
+  useEffect(() => {
+    scrollToNumber(displayNumber);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="app">
+      {/* Top display */}
+      <div className="display">
+        <div className="current">Current Number: {formatNumber(currentNumber)}</div>
+        <div className="starred-box">
           <input
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            placeholder="----"
-            className="border px-2 py-1 w-20 text-center rounded"
+            type="text"
+            placeholder="Enter SN"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
           />
           <button
-            onClick={() => {
-              const num = parseInt(inputVal, 10);
-              if (!isNaN(num) && num >= 1 && num <= numbers.length) {
-                setDn(num);
-                toggleStar(num);
-              }
-            }}
-            className={`p-1 rounded-full border-2 ${
-              sn ? "border-yellow-400 text-yellow-400" : "border-yellow-400 text-white"
-            }`}
+            className={`star ${starredNumber === parseInt(inputValue, 10) ? "active" : ""}`}
+            onClick={confirmStar}
           >
-            <Star
-              className={`w-5 h-5 ${
-                sn ? "fill-yellow-400 text-yellow-400" : "text-white"
-              }`}
-            />
+            ★
           </button>
         </div>
+        {starredNumber && (
+          <div className="turns">
+            {Math.abs(starredNumber - currentNumber)} turns left
+          </div>
+        )}
       </div>
 
-      {/* Center Display Number */}
-      <div className="flex items-center space-x-3">
-        <div className="text-5xl font-bold">
-          {String(dn).padStart(4, "0")}
-        </div>
-        <button
-          onClick={() => toggleStar(dn)}
-          className={`p-1 rounded-full border-2 ${
-            sn === dn ? "border-yellow-400 text-yellow-400" : "border-yellow-400 text-white"
-          }`}
-        >
-          <Star
-            className={`w-6 h-6 ${
-              sn === dn ? "fill-yellow-400 text-yellow-400" : "text-white"
-            }`}
-          />
-        </button>
+      {/* Counter */}
+      <div className="counter" ref={listRef} onScroll={handleScroll}>
+        {Array.from({ length: totalNumbers }, (_, i) => {
+          const num = i + 1;
+          const isDisplay = num === displayNumber;
+          const isCurrent = num === currentNumber;
+          const isStarred = num === starredNumber;
+          return (
+            <div
+              key={num}
+              className={`num ${isDisplay ? "display" : ""} ${
+                isCurrent ? "current" : ""
+              } ${isStarred && isDisplay ? "starred-highlight" : ""}`}
+            >
+              <span>{formatNumber(num)}</span>
+              {isDisplay && (
+                <button
+                  className={`star ${isStarred ? "active" : ""}`}
+                  onClick={() => toggleStar(num)}
+                >
+                  ★
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
+};
+
+export default App;
+
+// CSS (index.css)
+/* Layout */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 320px;
+}
+
+.display {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.starred-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.starred-box input {
+  padding: 5px;
+  font-size: 14px;
+  width: 100px;
+  text-align: center;
+}
+
+.starred-box .star {
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 20px;
+  color: white;
+  border: 2px solid gold;
+  border-radius: 50%;
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.starred-box .star.active {
+  background: gold;
+  color: white;
+}
+
+.turns {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #444;
+}
+
+.counter {
+  height: 280px;
+  overflow-y: scroll;
+  scrollbar-width: none; /* Firefox */
+}
+
+.counter::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.num {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: grey;
+  position: relative;
+}
+
+.num.display {
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+}
+
+.num.current {
+  background: #007bff;
+  color: white;
+}
+
+.num .star {
+  margin-left: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 2px solid gold;
+  border-radius: 50%;
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.num .star.active {
+  background: gold;
+  color: white;
+}
+
+.num.starred-highlight {
+  background: yellow;
 }
